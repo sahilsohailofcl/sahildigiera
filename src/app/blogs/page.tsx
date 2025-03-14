@@ -6,8 +6,18 @@ import Link from "next/link";
 import { Header } from "../sections/Header";
 import { Footer } from "../sections/Footer";
 
+// Define the type for a blog object
+interface Blog {
+  id: string;
+  image?: string;
+  title: string;
+  description: string;
+  date: string;
+  author: string;
+}
+
 export default function Blogs() {
-  const [blogs, setBlogs] = useState([]);
+  const [blogs, setBlogs] = useState<Blog[]>([]);
 
   // Fetch blogs from the database
   useEffect(() => {

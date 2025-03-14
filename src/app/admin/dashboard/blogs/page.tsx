@@ -4,13 +4,23 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
+// Define the Blog type
+interface Blog {
+  id: number;
+  title: string;
+  description: string;
+  author: string;
+  image: string | null;
+  date: string;
+}
+
 export default function BlogManagement() {
-  const [blogs, setBlogs] = useState([]);
+  const [blogs, setBlogs] = useState<Blog[]>([]);
   const [newBlog, setNewBlog] = useState({
     title: "",
     description: "",
     author: "Sahil DigiEra",
-    image: null,
+    image: null as File | null,
   });
 
   // Fetch blogs from the database
@@ -32,8 +42,8 @@ export default function BlogManagement() {
   }, []);
 
   // Handle image file selection
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
     setNewBlog({ ...newBlog, image: file });
   };
 
@@ -47,17 +57,17 @@ export default function BlogManagement() {
       if (newBlog.image) {
         formData.append("image", newBlog.image);
       }
-  
+
       try {
         const response = await fetch("/api/blogs", {
           method: "POST",
           body: formData,
         });
-  
+
         if (!response.ok) {
           throw new Error("Failed to create blog");
         }
-  
+
         const data = await response.json();
         setBlogs([...blogs, data]);
         setNewBlog({ title: "", description: "", author: "Sahil DigiEra", image: null });
