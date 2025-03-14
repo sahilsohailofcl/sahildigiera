@@ -1,5 +1,6 @@
+// src/app/admin/page.tsx
 import { getServerSession } from "next-auth";
-import { authOptions } from "../../api/auth/[...nextauth]/route";
+import { authOptions } from "../../../.././lib/auth"; // Import from lib/auth.ts
 import { redirect } from "next/navigation";
 import LogoutButton from "./LogoutButton"; // Import the Client Component
 
