@@ -28,11 +28,17 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-black text-white">
-      <div className="w-full max-w-md p-8 rounded-lg shadow-lg backdrop-blur-md bg-white/5 border border-white/10">
-        <h1 className="text-3xl font-bold text-center mb-6">Admin Login</h1>
+    <div className="flex items-center justify-center min-h-screen bg-black text-white p-6">
+      <div className="w-full max-w-md p-8 rounded-lg shadow-lg backdrop-blur-md bg-white/5 border border-white/10 relative overflow-hidden">
+        {/* Neon Glow Effect */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(49,126,49,0.2)_0%,_transparent_70%)] animate-pulse"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(168,224,99,0.1)_0%,_transparent_70%)] animate-pulse delay-1000"></div>
+
+        <h1 className="text-4xl font-bold text-center mb-8 text-transparent bg-clip-text bg-gradient-to-r from-[#317e31] to-[#a8e063] relative z-10">
+          Admin Login
+        </h1>
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
           <div>
             <label className="block text-sm font-medium mb-1">Email</label>
             <input
@@ -57,9 +63,10 @@ export default function LoginPage() {
           </div>
           <button
             type="submit"
-            className="w-full py-3 bg-[#317e31] hover:bg-[#2a6c2a] text-white font-semibold rounded transition duration-300"
+            className="w-full py-3 text-white font-semibold rounded transition-all duration-500 bg-gradient-to-r from-[#317e31] via-[#4CAF50] to-[#8BC34A] hover:bg-gradient-to-l hover:from-[#8BC34A] hover:via-[#4CAF50] hover:to-[#317e31] animate-gradient-x relative overflow-hidden group shadow-lg hover:shadow-[0_0_20px_10px_rgba(72,207,72,0.4)] animate-pulse hover:animate-none"
           >
-            Login
+            <span className="relative z-10">Login</span>
+            <span className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.3)_0%,_transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></span>
           </button>
         </form>
       </div>
