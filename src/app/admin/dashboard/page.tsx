@@ -1,7 +1,8 @@
-// src/app/admin/page.tsx
+// src/app/admin/dashboard/page.tsx
 import { getServerSession } from "next-auth";
-import { authOptions } from "../../../.././lib/auth"; // Import from lib/auth.ts
+import { authOptions } from "../../../../lib/auth"; // Import from lib/auth.ts
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import LogoutButton from "./LogoutButton"; // Import the Client Component
 
 export default async function AdminDashboard() {
@@ -14,11 +15,33 @@ export default async function AdminDashboard() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-black text-white">
-      <div className="w-full max-w-4xl p-8 rounded-lg shadow-lg backdrop-blur-md bg-white/5 border border-white/10">
-        <h1 className="text-4xl font-bold text-center mb-8">Admin Dashboard</h1>
-        <p className="text-center">Welcome to the admin panel!</p>
-        <LogoutButton /> {/* Use the Client Component */}
+    <div className="flex min-h-screen bg-black text-white">
+      {/* Left Navigation Bar */}
+      <div className="w-64 p-6 bg-black/90 border-r border-white/10">
+        <h2 className="text-2xl font-bold mb-8 text-[#317e31]">Admin Panel</h2>
+        <nav className="space-y-4">
+          <Link
+            href="/admin/dashboard"
+            className="block py-2 px-4 rounded-lg hover:bg-white/10 transition duration-300"
+          >
+            Home
+          </Link>
+          <Link
+            href="/admin/dashboard/blogs"
+            className="block py-2 px-4 rounded-lg hover:bg-white/10 transition duration-300"
+          >
+            Blogs
+          </Link>
+        </nav>
+        <div className="mt-8">
+          <LogoutButton />
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 p-8">
+        <h1 className="text-4xl font-bold mb-8">Admin Dashboard</h1>
+        <p className="text-lg">Welcome to the admin panel!</p>
       </div>
     </div>
   );
