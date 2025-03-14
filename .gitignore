@@ -39,3 +39,5 @@ next-env.d.ts
 # Ignore node_modules
 node_modules/
 client/node_modules
+
+.vscode
