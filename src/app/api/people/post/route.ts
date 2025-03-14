@@ -1,27 +1,25 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '../../../../../lib/prisma';
+import { PrismaClient } from "@prisma/client";
+import { NextResponse } from "next/server";
+
+const prisma = new PrismaClient();
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { name, email, message } = body;
+    const { name, email, message } = await request.json();
 
-    console.log("Creating person with data:", { name, email, message });
-    const person = await prisma.person.create({
+    const newClient = await prisma.client.create({
       data: {
         name,
         email,
         message,
       },
     });
-    console.log("Created person:", person);
 
-    return NextResponse.json(person);
-  } catch (err) {
-    const error = err as Error; // Type assertion
-    console.error('Failed to create person:', error.message);
+    return NextResponse.json(newClient, { status: 201 });
+  } catch (error) {
+    console.error("Failed to create client:", error);
     return NextResponse.json(
-      { error: 'Failed to create person', details: error.message },
+      { error: "Failed to create client" },
       { status: 500 }
     );
   }

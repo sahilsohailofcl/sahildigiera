@@ -40,7 +40,7 @@ export default function Help() {
         setSubmitStatus('error');
       }
     } catch (error) {
-      console.error('Error adding person:', error);
+      console.error('Error adding client:', error);
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);
