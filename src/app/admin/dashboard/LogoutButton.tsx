@@ -2,16 +2,20 @@
 "use client";
 
 import { signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function LogoutButton() {
+  const router = useRouter();
+
   const handleLogout = async () => {
     // Get the current host dynamically
     const host = window.location.origin;
     
-    await signOut({
-      callbackUrl: `${host}/login`, // Use dynamic host
-      redirect: true // Let NextAuth handle the redirect
-    });
+    // First sign out through NextAuth
+    await signOut({ redirect: false });
+    
+    // Then manually redirect to login with full URL
+    window.location.href = `${host}/login`;
   };
 
   return (

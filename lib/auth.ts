@@ -60,11 +60,14 @@ export const authOptions: NextAuthOptions = {
       return session as ExtendedSession;
     },
     async redirect({ url, baseUrl }) {
-      // Handle relative URLs
-      if (url.startsWith("/")) return `${baseUrl}${url}`;
-      // Handle URLs on the same origin
-      else if (new URL(url).origin === baseUrl) return url;
-      return baseUrl;
+      // Use window.location.origin when available (client-side)
+      const host = typeof window !== 'undefined' 
+        ? window.location.origin 
+        : process.env.NEXTAUTH_URL || baseUrl;
+      
+      if (url.startsWith("/")) return `${host}${url}`;
+      if (new URL(url).origin === host) return url;
+      return host;
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
