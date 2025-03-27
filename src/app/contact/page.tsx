@@ -126,16 +126,9 @@ export default function Help() {
                   </a>
                 </div>
               </div>
-              <div className="mt-6">
-                <h2 className="text-lg font-semibold">Visit Us</h2>
-                <p className="text-sm text-gray-300">
-                  Dollis Hill Lane<br />
-                  London, England, NW2 6EY
-                </p>
-              </div>
 
-              {/* Optional: Get a Quote Button */}
-              <div className="md:pt-[7.8rem] lg:pt-[7.8rem]">
+              {/* Schedule a Meeting Button */}
+              <div className="pt-8">
                 <a
                   href="https://calendly.com/sahildigiera"
                   target="_blank"
