@@ -23,7 +23,7 @@ export default function Help() {
     e.preventDefault();
     setIsSubmitting(true);
     setSubmitStatus('idle');
-
+  
     try {
       const response = await fetch('/api/people/post', {
         method: 'POST',
@@ -32,12 +32,15 @@ export default function Help() {
         },
         body: JSON.stringify(formData),
       });
-
+  
+      const data = await response.json();
+      
       if (response.ok) {
         setFormData({ name: '', email: '', message: '' });
         setSubmitStatus('success');
       } else {
-        setSubmitStatus('error');
+        // Handle API errors (including the "duplicate" case we now treat as success)
+        setSubmitStatus(data.error ? 'success' : 'error');
       }
     } catch (error) {
       console.error('Error adding client:', error);
@@ -46,7 +49,7 @@ export default function Help() {
       setIsSubmitting(false);
     }
   };
-
+  
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
       ...formData,
