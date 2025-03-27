@@ -41,6 +41,11 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
+  pages: {
+    signIn: '/login',
+    signOut: '/login',
+    error: '/login',
+  },
   callbacks: {
     async jwt({ token, user }: { token: JWT; user?: ExtendedUser }) {
       if (user) {
@@ -49,15 +54,32 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }: { session: Session; token: JWT }) {
-      // Ensure session.user is always defined
       if (session.user) {
         (session.user as ExtendedUser).id = token.id as string;
       }
       return session as ExtendedSession;
     },
+    async redirect({ url, baseUrl }) {
+      // Handle relative URLs
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      // Handle URLs on the same origin
+      else if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
+    },
   },
   secret: process.env.NEXTAUTH_SECRET,
   jwt: {
     secret: process.env.JWT_SECRET,
+  },
+  cookies: {
+    sessionToken: {
+      name: `${process.env.NODE_ENV === 'production' ? '__Secure-' : ''}next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
   },
 };
