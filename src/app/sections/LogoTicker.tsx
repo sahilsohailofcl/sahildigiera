@@ -6,41 +6,162 @@ import OpenAiLogo from "../assets/OpenAi.png";
 import AdobeLogo from "../assets/Adobe.png";
 import MernLogo from "../assets/Mern.png";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, useInView } from "framer-motion";
+import { useRef } from "react";
 
 export const LogoTicker = () => {
+  const containerRef = useRef(null);
+  const isInView = useInView(containerRef, { once: true, amount: 0.1 });
+
+  const techStack = [
+    { src: GoogleLogo, alt: "Google", category: "Platform" },
+    { src: FramerLogo, alt: "Framer", category: "Design" },
+    { src: WebFlowLogo, alt: "WebFlow", category: "Development" },
+    { src: OpenAiLogo, alt: "OpenAI", category: "AI" },
+    { src: AdobeLogo, alt: "Adobe", category: "Creative" },
+    { src: MernLogo, alt: "MERN Stack", category: "Fullstack" },
+  ];
+
   return (
-    <section className="py-8 md:py-12 bg-black">
-      <div className="container">
-        <div className="flex overflow-hidden [mask-image:linear-gradient(to_right,transparent,black,transparent)]">
+    <section 
+      className="py-16 md:py-24 bg-black relative overflow-hidden"
+      ref={containerRef}
+    >
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden opacity-5">
+        {[...Array(8)].map((_, i) => (
           <motion.div
-            className="flex gap-14 flex-none pr-14"
+            key={i}
             animate={{
-              translateX: "-50%",
+              x: [0, 100 * Math.sin(i * 0.5)],
+              y: [0, 100 * Math.cos(i * 0.7)],
             }}
             transition={{
-              duration: 20,
+              duration: 20 + i * 3,
+              repeat: Infinity,
+              repeatType: "reverse",
+              ease: "linear",
+            }}
+            className={`absolute rounded-full ${
+              i % 3 === 0 ? "w-32 h-32 blur-xl" : 
+              i % 2 === 0 ? "w-24 h-24 blur-lg" : 
+              "w-16 h-16 blur-md"
+            } bg-[#317e31] opacity-20`}
+            style={{
+              top: `${10 + (i * 10) % 80}%`,
+              left: `${10 + (i * 15) % 80}%`,
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="container relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12 md:mb-16"
+        >
+          <span className="inline-block px-4 py-2 rounded-full bg-[#317e31]/20 text-[#50a826] text-sm font-medium mb-4">
+            Technology Partners
+          </span>
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white/80">
+              Trusted By
+            </span>{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#50a826] to-[#317e31]">
+              Industry Leaders
+            </span>
+          </h2>
+          <p className="text-lg text-white/60 max-w-2xl mx-auto">
+            We work with the best tools and platforms to deliver exceptional results.
+          </p>
+        </motion.div>
+
+        <div className="relative">
+          {/* First row */}
+          <motion.div
+            className="flex gap-10 md:gap-16 items-center py-4"
+            initial={{ x: "0%" }}
+            animate={isInView ? { x: "-50%" } : {}}
+            transition={{
+              duration: 25,
               repeat: Infinity,
               ease: "linear",
-              repeatType: "loop",
             }}
           >
-            <Image src={GoogleLogo} alt="Aceme Logo" className="logo-ticker-image" />
-            <Image src={FramerLogo} alt="Quantum Logo" className="logo-ticker-image" />
-            <Image src={WebFlowLogo} alt="Echo Logo" className="logo-ticker-image" />
-            <Image src={OpenAiLogo} alt="Celestial Logo" className="logo-ticker-image" />
-            <Image src={AdobeLogo} alt="Pulse Logo" className="logo-ticker-image" />
-            <Image src={MernLogo} alt="Apex Logo" className="logo-ticker-image" />
+            {[...techStack, ...techStack].map((tech, index) => (
+              <motion.div
+                key={`first-${index}`}
+                className="flex-shrink-0 group relative"
+                whileHover={{ scale: 1.1, y: -5 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              >
+                <div className="relative w-32 md:w-40 h-16 flex items-center justify-center">
+                  <Image 
+                    src={tech.src} 
+                    alt={tech.alt} 
+                    fill
+                    className="object-contain opacity-80 group-hover:opacity-100 transition-all duration-300"
+                  />
+                </div>
+                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <span className="whitespace-nowrap text-xs px-2 py-1 rounded-full bg-[#317e31]/80 text-white">
+                    {tech.category}
+                  </span>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
 
-            {/* Second set of Logos for continuous loop */}
-            <Image src={GoogleLogo} alt="Aceme Logo" className="logo-ticker-image" />
-            <Image src={FramerLogo} alt="Quantum Logo" className="logo-ticker-image" />
-            <Image src={WebFlowLogo} alt="Echo Logo" className="logo-ticker-image" />
-            <Image src={OpenAiLogo} alt="Celestial Logo" className="logo-ticker-image" />
-            <Image src={AdobeLogo} alt="Pulse Logo" className="logo-ticker-image" />
-            <Image src={MernLogo} alt="Apex Logo" className="logo-ticker-image" />
+          {/* Second row (reverse direction) */}
+          <motion.div
+            className="flex gap-10 md:gap-16 items-center py-4"
+            initial={{ x: "-50%" }}
+            animate={isInView ? { x: "0%" } : {}}
+            transition={{
+              duration: 22,
+              repeat: Infinity,
+              ease: "linear",
+            }}
+          >
+            {[...techStack.reverse(), ...techStack].map((tech, index) => (
+              <motion.div
+                key={`second-${index}`}
+                className="flex-shrink-0 group relative"
+                whileHover={{ scale: 1.05, y: -3 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              >
+                <div className="relative w-28 md:w-36 h-14 flex items-center justify-center">
+                  <Image 
+                    src={tech.src} 
+                    alt={tech.alt} 
+                    fill
+                    className="object-contain opacity-60 group-hover:opacity-90 transition-all duration-300"
+                  />
+                </div>
+              </motion.div>
+            ))}
           </motion.div>
         </div>
+
+        {/* CTA */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : {}}
+          transition={{ delay: 0.4, duration: 0.6 }}
+          className="text-center mt-16"
+        >
+          <p className="text-white/60 mb-6">Want to know more about our technical capabilities?</p>
+          <motion.a
+            href="/technology"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-gradient-to-r from-[#317e31] to-[#50a826] text-white font-medium shadow-lg shadow-[#317e31]/30 hover:shadow-[#50a826]/40 transition-all"
+          >
+            Explore Our Tech Stack
+          </motion.a>
+        </motion.div>
       </div>
     </section>
   );
