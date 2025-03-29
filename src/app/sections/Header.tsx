@@ -198,7 +198,7 @@ export const Header = () => {
                   </Link>
                   
                   <Link 
-                    href="/services/marketing" 
+                    href="/services/digital-marketing" 
                     className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 transition-all"
                   >
                     <div className="p-2 rounded-lg bg-[#317e31]/80">
@@ -330,7 +330,7 @@ export const Header = () => {
                     </Link>
                     
                     <Link 
-                      href="/services/marketing" 
+                      href="/services/digital-marketing" 
                       onClick={closeMenu}
                       className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 transition-all"
                     >

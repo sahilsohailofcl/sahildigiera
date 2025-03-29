@@ -98,7 +98,7 @@ export default function Services() {
                 <p className="text-white/80 mb-4">
                   We drive engagement and conversions with data-driven digital marketing campaigns.
                 </p>
-                <Link href="/services/marketing">
+                <Link href="/services/digital-marketing">
                   <button className="px-4 py-2 bg-[#317e31] hover:bg-[#2a6c2a] text-white font-semibold rounded-lg transition-all duration-300">
                     Learn More
                   </button>
