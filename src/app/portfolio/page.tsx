@@ -7,9 +7,9 @@ export default function YourComponent() {
   return (
     <>
       <Header />
-        <div>
-          Portfolio  
-        <div/>
+      <div>
+        Portfolio  
+      </div>
       <Footer />
     </>
   );
