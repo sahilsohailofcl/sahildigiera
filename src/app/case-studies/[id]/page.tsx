@@ -5,11 +5,31 @@ import { Header } from "../../sections/Header";
 import { Footer } from "../../sections/Footer";
 import { useParams } from "next/navigation";
 
+// Define types
+type Stat = {
+  value: string;
+  label: string;
+};
+
+type CaseStudy = {
+  title: string;
+  description: string;
+  category: string;
+  results: string[];
+  challenge: string;
+  solution: string;
+  technologies: string[];
+  coverImage: string;
+  stats: Stat[];
+};
+
+type CaseStudies = Record<string, CaseStudy>;
+
 const CaseStudyPage = () => {
-  const { id } = useParams();
-  
-  // In a real app, you'd fetch this data based on the ID
-  const caseStudies = {
+  const params = useParams();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id || "";
+
+  const caseStudies: CaseStudies = {
     "luxury-fashion-platform": {
       title: "Luxury Fashion Platform",
       description: "Shopify Plus solution with 3D product visualization",
@@ -69,7 +89,16 @@ const CaseStudyPage = () => {
     }
   };
 
-  const study = caseStudies[id as string] || caseStudies["luxury-fashion-platform"];
+  // Get valid case study IDs
+  const validIds = Object.keys(caseStudies);
+  
+  // Type guard to check if ID is valid
+  const isValidId = (id: string): id is keyof typeof caseStudies => {
+    return validIds.includes(id);
+  };
+
+  // Safely get the case study data
+  const study = isValidId(id) ? caseStudies[id] : caseStudies["luxury-fashion-platform"];
 
   return (
     <div className="min-h-screen bg-black text-white">
