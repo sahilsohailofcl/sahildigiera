@@ -27,10 +27,10 @@ export default function CaseStudyManagement() {
     title: "",
     description: "",
     category: "",
-    results: "",
+    results: [],
     challenge: "",
     solution: "",
-    technologies: "",
+    technologies: [],
     coverImage: "",
     metrics: "",
   });
@@ -57,10 +57,10 @@ export default function CaseStudyManagement() {
         title: newCaseStudy.title,
         description: newCaseStudy.description,
         category: newCaseStudy.category,
-        results: newCaseStudy.results?.split(",").map((r) => r.trim()) || [],
+        results: newCaseStudy.results || [],
         challenge: newCaseStudy.challenge || null,
         solution: newCaseStudy.solution || null,
-        technologies: newCaseStudy.technologies?.split(",").map((t) => t.trim()) || [],
+        technologies: newCaseStudy.technologies || [],
         coverImage: newCaseStudy.coverImage || null,
         metrics: newCaseStudy.metrics || null,
         userId: 1, // Replace with dynamic user ID
@@ -77,7 +77,9 @@ export default function CaseStudyManagement() {
         if (!response.ok) throw new Error("Failed to update case study");
 
         const updatedCase = await response.json();
-        updatedList = caseStudies.map((cs) => (cs.id === editingCaseStudy ? updatedCase : cs));
+        updatedList = caseStudies.map((cs) =>
+          cs.id === editingCaseStudy ? updatedCase : cs
+        );
       } else {
         // Create New Case Study
         const response = await fetch(API_URL, {
@@ -96,10 +98,10 @@ export default function CaseStudyManagement() {
         title: "",
         description: "",
         category: "",
-        results: "",
+        results: [],
         challenge: "",
         solution: "",
-        technologies: "",
+        technologies: [],
         coverImage: "",
         metrics: "",
       });
@@ -112,8 +114,10 @@ export default function CaseStudyManagement() {
   const handleEdit = (cs: CaseStudy) => {
     setNewCaseStudy({
       ...cs,
-      results: cs.results.join(", "),
-      technologies: cs.technologies.join(", "),
+      results: cs.results || "",
+      technologies: cs.technologies || "",
+      coverImage: cs.coverImage || "",
+      metrics: cs.metrics || "",
     });
     setEditingCaseStudy(cs.id);
   };
@@ -147,15 +151,81 @@ export default function CaseStudyManagement() {
         {/* Add/Edit Form */}
         <motion.div className="mb-8 p-6 rounded-lg bg-white/5 border border-white/10">
           <h2 className="text-2xl font-bold mb-4">{editingCaseStudy ? "Edit Case Study" : "Add New Case Study"}</h2>
-          <input type="text" placeholder="Title" value={newCaseStudy.title} onChange={(e) => setNewCaseStudy({ ...newCaseStudy, title: e.target.value })} className="w-full p-3 mb-4 rounded-lg bg-white/5 text-white" />
-          <textarea placeholder="Description" value={newCaseStudy.description} onChange={(e) => setNewCaseStudy({ ...newCaseStudy, description: e.target.value })} className="w-full p-3 mb-4 rounded-lg bg-white/5 text-white" rows={4} />
-          <input type="text" placeholder="Category" value={newCaseStudy.category} onChange={(e) => setNewCaseStudy({ ...newCaseStudy, category: e.target.value })} className="w-full p-3 mb-4 rounded-lg bg-white/5 text-white" />
-          <input type="text" placeholder="Results (comma-separated)" value={newCaseStudy.results} onChange={(e) => setNewCaseStudy({ ...newCaseStudy, results: e.target.value })} className="w-full p-3 mb-4 rounded-lg bg-white/5 text-white" />
-          <input type="text" placeholder="Challenge" value={newCaseStudy.challenge} onChange={(e) => setNewCaseStudy({ ...newCaseStudy, challenge: e.target.value })} className="w-full p-3 mb-4 rounded-lg bg-white/5 text-white" />
-          <input type="text" placeholder="Solution" value={newCaseStudy.solution} onChange={(e) => setNewCaseStudy({ ...newCaseStudy, solution: e.target.value })} className="w-full p-3 mb-4 rounded-lg bg-white/5 text-white" />
-          <input type="text" placeholder="Technologies (comma-separated)" value={newCaseStudy.technologies} onChange={(e) => setNewCaseStudy({ ...newCaseStudy, technologies: e.target.value })} className="w-full p-3 mb-4 rounded-lg bg-white/5 text-white" />
-          <input type="text" placeholder="Cover Image URL" value={newCaseStudy.coverImage} onChange={(e) => setNewCaseStudy({ ...newCaseStudy, coverImage: e.target.value })} className="w-full p-3 mb-4 rounded-lg bg-white/5 text-white" />
-          <input type="text" placeholder="Metrics (optional)" value={newCaseStudy.metrics} onChange={(e) => setNewCaseStudy({ ...newCaseStudy, metrics: e.target.value })} className="w-full p-3 mb-4 rounded-lg bg-white/5 text-white" />
+          <input
+            type="text"
+            placeholder="Title"
+            value={newCaseStudy.title}
+            onChange={(e) => setNewCaseStudy({ ...newCaseStudy, title: e.target.value })}
+            className="w-full p-3 mb-4 rounded-lg bg-white/5 text-white"
+          />
+          <textarea
+            placeholder="Description"
+            value={newCaseStudy.description}
+            onChange={(e) => setNewCaseStudy({ ...newCaseStudy, description: e.target.value })}
+            className="w-full p-3 mb-4 rounded-lg bg-white/5 text-white"
+            rows={4}
+          />
+          <input
+            type="text"
+            placeholder="Category"
+            value={newCaseStudy.category}
+            onChange={(e) => setNewCaseStudy({ ...newCaseStudy, category: e.target.value })}
+            className="w-full p-3 mb-4 rounded-lg bg-white/5 text-white"
+          />
+          <input
+            type="text"
+            placeholder="Results (comma-separated)"
+            value={newCaseStudy.results?.join(", ")} // Convert array to string for the input
+            onChange={(e) => setNewCaseStudy({
+              ...newCaseStudy,
+              results: e.target.value.split(",").map((r) => r.trim()) // Convert string to array
+            })}
+            className="w-full p-3 mb-4 rounded-lg bg-white/5 text-white"
+          />
+          <input
+            type="text"
+            placeholder="Challenge"
+            value={newCaseStudy.challenge}
+            onChange={(e) => setNewCaseStudy({ ...newCaseStudy, challenge: e.target.value })}
+            className="w-full p-3 mb-4 rounded-lg bg-white/5 text-white"
+          />
+          <input
+            type="text"
+            placeholder="Solution"
+            value={newCaseStudy.solution}
+            onChange={(e) => setNewCaseStudy({ ...newCaseStudy, solution: e.target.value })}
+            className="w-full p-3 mb-4 rounded-lg bg-white/5 text-white"
+          />
+          <input
+            type="text"
+            placeholder="Technologies (comma-separated)"
+            value={newCaseStudy.technologies?.join(", ")}
+            onChange={(e) => setNewCaseStudy({
+              ...newCaseStudy,
+              technologies: e.target.value.split(",").map((r) => r.trim()) // Convert string to array
+            })}
+            className="w-full p-3 mb-4 rounded-lg bg-white/5 text-white"
+          />
+          <input
+            type="text"
+            placeholder="Cover Image URL"
+            value={newCaseStudy.coverImage || ""}
+            onChange={(e) => setNewCaseStudy({
+              ...newCaseStudy,
+              coverImage: e.target.value
+            })}
+            className="w-full p-3 mb-4 rounded-lg bg-white/5 text-white"
+          />
+          <input
+            type="text"
+            placeholder="Metrics (optional)"
+            value={newCaseStudy.metrics || ""}
+            onChange={(e) => setNewCaseStudy({
+              ...newCaseStudy,
+              metrics: e.target.value
+            })}
+            className="w-full p-3 mb-4 rounded-lg bg-white/5 text-white"
+          />
           <button onClick={handleAddOrEditCaseStudy} className="py-2 px-6 bg-[#317e31] text-white rounded-lg">{editingCaseStudy ? "Update" : "Add"} Case Study</button>
         </motion.div>
 
