@@ -1,17 +1,19 @@
 "use client";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { Header } from "../../sections/Header";
 import { Footer } from "../../sections/Footer";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { FiArrowLeft, FiChevronRight } from "react-icons/fi";
 
-// Define types
 type Stat = {
   value: string;
   label: string;
 };
 
 type CaseStudy = {
+  id: string;
   title: string;
   description: string;
   category: string;
@@ -21,92 +23,181 @@ type CaseStudy = {
   technologies: string[];
   coverImage: string;
   stats: Stat[];
+  metrics?: Record<string, string>;
 };
 
-type CaseStudies = Record<string, CaseStudy>;
-
 const CaseStudyPage = () => {
+  const router = useRouter();
   const params = useParams();
   const id = Array.isArray(params.id) ? params.id[0] : params.id || "";
+  const [study, setStudy] = useState<CaseStudy | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [relatedStudies, setRelatedStudies] = useState<CaseStudy[]>([]);
 
-  const caseStudies: CaseStudies = {
-    "luxury-fashion-platform": {
-      title: "Luxury Fashion Platform",
-      description: "Shopify Plus solution with 3D product visualization",
-      category: "E-Commerce",
-      results: [
-        "42% increase in conversion rate",
-        "68% faster page loads",
-        "35% higher average order value"
-      ],
-      challenge: "The client needed a high-performance e-commerce platform that could showcase luxury products with rich media while maintaining fast load times.",
-      solution: "We built a custom Shopify Plus store with 3D product visualization, optimized media delivery through Cloudinary, and implemented a progressive loading strategy.",
-      technologies: ["Shopify Plus", "React", "Three.js", "Cloudinary"],
-      coverImage: "/case-studies/fashion.jpg",
-      stats: [
-        { value: "42%", label: "Conversion Increase" },
-        { value: "1.2s", label: "Avg. Load Time" },
-        { value: "$350", label: "Avg. Order Value" }
-      ]
-    },
-    "ai-analytics-dashboard": {
-      title: "AI-Powered Analytics Dashboard",
-      description: "Next.js application with real-time data visualization",
-      category: "Web Application",
-      results: [
-        "78% faster data processing",
-        "92% user satisfaction",
-        "60% reduction in server costs"
-      ],
-      challenge: "The client struggled with slow data processing and poor visualization of complex analytics.",
-      solution: "We developed a Next.js application with WebAssembly-powered data processing and custom D3.js visualizations.",
-      technologies: ["Next.js", "Node.js", "WebAssembly", "D3.js"],
-      coverImage: "/case-studies/analytics.jpg",
-      stats: [
-        { value: "78%", label: "Faster Processing" },
-        { value: "92%", label: "User Satisfaction" },
-        { value: "60%", label: "Cost Reduction" }
-      ]
-    },
-    "healthcare-portal": {
-      title: "Healthcare Patient Portal",
-      description: "Secure HIPAA-compliant platform serving 50,000+ patients",
-      category: "Healthcare Tech",
-      results: [
-        "99.9% uptime",
-        "40% faster appointment booking",
-        "50% reduction in support tickets"
-      ],
-      challenge: "A healthcare provider needed a secure, reliable patient portal that could handle sensitive data.",
-      solution: "We built a HIPAA-compliant platform with end-to-end encryption, two-factor authentication, and automated appointment scheduling.",
-      technologies: ["React", "Node.js", "AWS", "PostgreSQL"],
-      coverImage: "/case-studies/healthcare.jpg",
-      stats: [
-        { value: "99.9%", label: "Uptime" },
-        { value: "40%", label: "Faster Booking" },
-        { value: "50%", label: "Fewer Tickets" }
-      ]
-    }
-  };
-
-  // Get valid case study IDs
-  const validIds = Object.keys(caseStudies);
+  useEffect(() => {
+    const fetchCaseStudy = async () => {
+      try {
+        setLoading(true);
+        
+        const [studyResponse, relatedResponse] = await Promise.all([
+          fetch(`/api/case-studies/${id}`),
+          fetch('/api/case-studies')
+        ]);
   
-  // Type guard to check if ID is valid
-  const isValidId = (id: string): id is keyof typeof caseStudies => {
-    return validIds.includes(id);
-  };
+        if (!studyResponse.ok || !relatedResponse.ok) {
+          throw new Error('Failed to fetch case study data');
+        }
+  
+        const [studyData, allStudies] = await Promise.all([
+          studyResponse.json(),
+          relatedResponse.json()
+        ]);
+  
+        // Convert metrics to stats format if needed
+        if (studyData.metrics && !studyData.stats) {
+          studyData.stats = Object.entries(studyData.metrics).map(([label, value]) => ({
+            label,
+            value: String(value)
+          }));
+        }
+  
+        // Ensure stats is always an array
+        studyData.stats = studyData.stats || [];
+  
+        setStudy(studyData);
+        setRelatedStudies(allStudies.filter((s: CaseStudy) => s.id !== id));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    if (id) fetchCaseStudy();
+  }, [id]);
+  
 
-  // Safely get the case study data
-  const study = isValidId(id) ? caseStudies[id] : caseStudies["luxury-fashion-platform"];
+  // Loading skeleton component
+  const SkeletonLoader = () => (
+    <div className="min-h-screen bg-black text-white">
+      <Header />
+      <div className="container mx-auto px-4 py-16">
+        {/* Back button skeleton */}
+        <div className="h-10 w-24 bg-white/10 rounded-full mb-8"></div>
+        
+        {/* Hero section skeleton */}
+        <div className="mb-16">
+          <div className="h-8 w-1/4 bg-white/10 rounded-full mb-6"></div>
+          <div className="h-12 w-3/4 bg-white/10 rounded-full mb-4"></div>
+          <div className="h-6 w-1/2 bg-white/10 rounded-full"></div>
+        </div>
+
+        {/* Content skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+          <div className="lg:col-span-2 space-y-12">
+            {[...Array(3)].map((_, i) => (
+              <div key={i}>
+                <div className="h-8 w-1/3 bg-white/10 rounded-full mb-4"></div>
+                <div className="h-4 w-full bg-white/10 rounded-full mb-2"></div>
+                <div className="h-4 w-5/6 bg-white/10 rounded-full mb-2"></div>
+                <div className="h-4 w-2/3 bg-white/10 rounded-full"></div>
+              </div>
+            ))}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-12 bg-white/10 rounded-lg"></div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="space-y-8">
+            <div className="h-64 bg-white/10 rounded-xl"></div>
+            <div className="h-48 bg-white/10 rounded-xl"></div>
+          </div>
+        </div>
+      </div>
+      <Footer />
+    </div>
+  );
+
+  if (loading) return <SkeletonLoader />;
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
+        <Header />
+        <div className="text-center max-w-md p-8">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-900/20 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Error Loading Case Study</h2>
+          <p className="text-white/80 mb-6">{error}</p>
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={() => router.push('/case-studies')}
+              className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+            >
+              Back to Case Studies
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-2 bg-[#50a826] hover:bg-[#50a826]/90 rounded-full transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!study) {
+    return (
+      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
+        <Header />
+        <div className="text-center max-w-md p-8">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/10 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Case Study Not Found</h2>
+          <p className="text-white/80 mb-6">The requested case study could not be found.</p>
+          <button
+            onClick={() => router.push('/case-studies')}
+            className="px-6 py-2 bg-[#50a826] hover:bg-[#50a826]/90 rounded-full transition-colors"
+          >
+            View All Case Studies
+          </button>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black text-white">
       <Header />
       
       <main>
+        {/* Back button */}
+        <div className="container mx-auto px-4 pt-8">
+          <motion.button
+            onClick={() => router.push('/case-studies')}
+            whileHover={{ x: -4 }}
+            className="flex items-center gap-2 text-white/60 hover:text-white transition-colors"
+          >
+            <FiArrowLeft className="text-[#50a826]" />
+            Back to Case Studies
+          </motion.button>
+        </div>
+
         {/* Hero Section */}
-        <section className="relative pt-32 pb-24 overflow-hidden">
+        <section className="relative pt-16 pb-24 overflow-hidden">
           <div className="absolute inset-0 overflow-hidden opacity-20">
             <div 
               className="absolute inset-0 bg-cover bg-center"
@@ -168,9 +259,13 @@ const CaseStudyPage = () => {
                   </p>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {study.technologies.map((tech, index) => (
-                      <div key={index} className="bg-white/5 rounded-lg p-4 text-center">
+                      <motion.div
+                        key={index}
+                        whileHover={{ scale: 1.05 }}
+                        className="bg-white/5 rounded-lg p-4 text-center hover:bg-white/10 transition-colors"
+                      >
                         <span className="text-white font-medium">{tech}</span>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                 </motion.div>
@@ -184,10 +279,17 @@ const CaseStudyPage = () => {
                   <h2 className="text-3xl font-bold text-white mb-6">The Results</h2>
                   <ul className="space-y-4">
                     {study.results.map((result, index) => (
-                      <li key={index} className="flex items-start">
+                      <motion.li 
+                        key={index}
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.4, delay: index * 0.1 }}
+                        viewport={{ once: true }}
+                        className="flex items-start"
+                      >
                         <span className="text-[#50a826] mr-3 mt-1">✓</span>
                         <span className="text-white/80 text-lg">{result}</span>
-                      </li>
+                      </motion.li>
                     ))}
                   </ul>
                 </motion.div>
@@ -205,10 +307,16 @@ const CaseStudyPage = () => {
                   <h3 className="text-xl font-bold text-white mb-6">Key Metrics</h3>
                   <div className="space-y-6">
                     {study.stats.map((stat, index) => (
-                      <div key={index}>
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: 0.1 * index }}
+                        viewport={{ once: true }}
+                      >
                         <div className="text-3xl font-bold text-[#50a826]">{stat.value}</div>
                         <div className="text-white/60">{stat.label}</div>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                 </motion.div>
@@ -235,29 +343,34 @@ const CaseStudyPage = () => {
         </section>
 
         {/* More Case Studies */}
-        <section className="py-24 bg-black">
-          <div className="container mx-auto px-4">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-12 text-center">
-              Explore More Case Studies
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {Object.entries(caseStudies)
-                .filter(([key]) => key !== id)
-                .map(([key, study], index) => (
+        {relatedStudies.length > 0 && (
+          <section className="py-24 bg-black">
+            <div className="container mx-auto px-4">
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                viewport={{ once: true }}
+                className="text-3xl md:text-4xl font-bold text-white mb-12 text-center"
+              >
+                Explore More Case Studies
+              </motion.h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {relatedStudies.slice(0, 2).map((relatedStudy, index) => (
                   <motion.div
-                    key={key}
+                    key={relatedStudy.id}
                     initial={{ opacity: 0, y: 50 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: index * 0.1 }}
                     viewport={{ once: true }}
                     className="group"
                   >
-                    <Link href={`/case-studies/${key}`}>
+                    <Link href={`/case-studies/${relatedStudy.id}`}>
                       <div className="relative overflow-hidden rounded-xl h-64">
                         <div 
                           className="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-500"
                           style={{ 
-                            backgroundImage: `url(${study.coverImage})`,
+                            backgroundImage: `url(${relatedStudy.coverImage})`,
                           }}
                         >
                           <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-black/30" />
@@ -266,36 +379,25 @@ const CaseStudyPage = () => {
                           <div className="flex items-center gap-2 mb-2">
                             <span className="w-2 h-2 rounded-full bg-[#50a826]" />
                             <span className="text-xs font-medium text-[#50a826]">
-                              {study.category}
+                              {relatedStudy.category}
                             </span>
                           </div>
                           <h3 className="text-2xl font-bold text-white mb-2">
-                            {study.title}
+                            {relatedStudy.title}
                           </h3>
                           <span className="inline-flex items-center gap-1 text-sm text-[#50a826] font-medium">
                             View Case Study
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="16"
-                              height="16"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M5 12h14M12 5l7 7-7 7" />
-                            </svg>
+                            <FiChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                           </span>
                         </div>
                       </div>
                     </Link>
                   </motion.div>
                 ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
       </main>
 
       <Footer />

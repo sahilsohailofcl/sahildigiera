@@ -1,53 +1,119 @@
 "use client";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import ArrowRight from "../assets/arrow-right.svg";
-import CaseStudy1 from "../assets/product-image.png";
-import CaseStudy2 from "../assets/product-image.png";
-import CaseStudy3 from "../assets/product-image.png";
+import { JSX, SVGProps, useEffect, useState } from "react";
+
+// Inline SVG component instead of importing
+const ArrowRight = (props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) => (
+  <svg 
+    width="24" 
+    height="24" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <path 
+      d="M5 12H19M19 12L12 5M19 12L12 19" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+// Helper function for placeholder images
+const getImageSrc = (imagePath: string) => {
+  if (!imagePath || typeof imagePath !== 'string') {
+    return 'https://placehold.co/600x400/317e31/FFFFFF?text=Case+Study';
+  }
+  return imagePath;
+};
+
+interface CaseStudy {
+  id: string;
+  title: string;
+  description: string;
+  coverImage: string;
+  metrics: Array<{ value: string; label: string }>;
+  category: string;
+}
 
 export const CaseStudies = () => {
-  const caseStudies = [
-    {
-      id: 1,
-      title: "E-commerce Transformation",
-      description: "Revamped online store with improved UX and performance optimization",
-      image: CaseStudy1,
-      metrics: [
-        { value: "320%", label: "Revenue Increase" },
-        { value: "4.8s → 1.2s", label: "Load Time" },
-        { value: "65%", label: "Conversion Lift" }
-      ],
-      category: "Web Development",
-      link: "/case-studies/ecommerce"
-    },
-    {
-      id: 2,
-      title: "SEO Dominance",
-      description: "Comprehensive SEO strategy for competitive finance niche",
-      image: CaseStudy2,
-      metrics: [
-        { value: "#1", label: "Google Ranking" },
-        { value: "890%", label: "Organic Traffic" },
-        { value: "120+", label: "Top 10 Keywords" }
-      ],
-      category: "SEO Optimization",
-      link: "/case-studies/seo"
-    },
-    {
-      id: 3,
-      title: "Social Media Growth",
-      description: "360° social media campaign for lifestyle brand",
-      image: CaseStudy3,
-      metrics: [
-        { value: "10M+", label: "Impressions" },
-        { value: "400%", label: "Engagement" },
-        { value: "25K", label: "New Followers" }
-      ],
-      category: "Digital Marketing",
-      link: "/case-studies/social-media"
-    }
-  ];
+  const [caseStudies, setCaseStudies] = useState<CaseStudy[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCaseStudies = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/case-studies?limit=3');
+        if (!response.ok) {
+          throw new Error('Failed to fetch case studies');
+        }
+        const data = await response.json();
+        
+        const formattedData = data.map((study: any) => {
+          // Handle metrics transformation
+          let metrics: Array<{ value: string; label: string }> = [];
+          
+          if (Array.isArray(study.stats)) {
+            metrics = study.stats;
+          } else if (study.metrics && typeof study.metrics === 'object') {
+            metrics = Object.entries(study.metrics).map(([label, value]) => ({
+              label,
+              value: String(value)
+            }));
+          }
+
+          // Ensure coverImage is a valid string
+          const coverImage = typeof study.coverImage === 'string' 
+            ? study.coverImage 
+            : null;
+
+          return {
+            id: study.id || `case-study-${Math.random().toString(36).substr(2, 9)}`,
+            title: study.title || "Untitled Case Study",
+            description: study.description || "No description available",
+            coverImage: coverImage,
+            metrics,
+            category: study.category || "Case Study"
+          };
+        });
+        
+        setCaseStudies(formattedData);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        console.error("Error fetching case studies:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCaseStudies();
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="py-24 bg-black relative overflow-hidden">
+        <div className="container text-center">
+          <p className="text-white/60">Loading case studies...</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="py-24 bg-black relative overflow-hidden">
+        <div className="container text-center">
+          <p className="text-red-500">Error loading case studies: {error}</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-24 bg-black relative overflow-hidden">
@@ -66,7 +132,7 @@ export const CaseStudies = () => {
               repeatType: "reverse",
               ease: "linear",
             }}
-            className={`absolute rounded-full w-64 h-64 blur-3xl`}
+            className="absolute rounded-full w-64 h-64 blur-3xl"
             style={{
               top: `${10 + (i * 15) % 80}%`,
               left: `${10 + (i * 20) % 80}%`,
@@ -100,77 +166,94 @@ export const CaseStudies = () => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {caseStudies.map((caseStudy, index) => (
-            <motion.div
-              key={caseStudy.id}
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              viewport={{ once: true }}
-              className="group relative overflow-hidden rounded-xl bg-gradient-to-b from-white/5 to-white/0 backdrop-blur-sm border border-white/10 hover:border-[#317e31]/50 transition-all"
-              style={{ boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)" }}
-            >
-              {/* Image */}
-              <div className="relative h-60 overflow-hidden">
-                <Image
-                  src={caseStudy.image}
-                  alt={caseStudy.title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                <span className="absolute top-4 right-4 px-3 py-1 rounded-full bg-[#317e31] text-white text-xs font-medium">
-                  {caseStudy.category}
-                </span>
-              </div>
-
-              {/* Content */}
-              <div className="p-6">
-                <h3 className="text-2xl font-bold text-white mb-2">{caseStudy.title}</h3>
-                <p className="text-white/70 mb-6">{caseStudy.description}</p>
-                
-                {/* Metrics */}
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  {caseStudy.metrics.map((metric, i) => (
-                    <div key={i} className="text-center">
-                      <div className="text-2xl font-bold text-[#50a826]">{metric.value}</div>
-                      <div className="text-xs text-white/60 uppercase tracking-wider">{metric.label}</div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* CTA */}
-                <motion.a
-                  href={caseStudy.link}
-                  className="flex items-center gap-2 text-[#50a826] font-medium group-hover:text-[#317e31] transition-colors"
-                  whileHover={{ x: 5 }}
+        {caseStudies.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {caseStudies.map((caseStudy, index) => (
+                <motion.div
+                  key={caseStudy.id}
+                  initial={{ opacity: 0, y: 50 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  viewport={{ once: true }}
+                  className="group relative overflow-hidden rounded-xl bg-gradient-to-b from-white/5 to-white/0 backdrop-blur-sm border border-white/10 hover:border-[#317e31]/50 transition-all"
+                  style={{ boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)" }}
                 >
-                  <span>View Case Study</span>
-                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </motion.a>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+                  {/* Image */}
+                  <div className="relative h-60 overflow-hidden">
+                    {caseStudy.coverImage ? (
+                      <Image
+                        src={getImageSrc(caseStudy.coverImage)}
+                        alt={caseStudy.title || "Case study"}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-700"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                        <span className="text-gray-400">No image available</span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                    <span className="absolute top-4 right-4 px-3 py-1 rounded-full bg-[#317e31] text-white text-xs font-medium">
+                      {caseStudy.category}
+                    </span>
+                  </div>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          viewport={{ once: true }}
-          className="text-center mt-16"
-        >
-          <motion.a
-            href="/case-studies"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-lg bg-transparent border border-[#317e31] text-[#50a826] font-medium hover:bg-[#317e31]/10 transition-all"
-          >
-            View All Case Studies
-            <ArrowRight className="w-5 h-5" />
-          </motion.a>
-        </motion.div>
+                  {/* Content */}
+                  <div className="p-6">
+                    <h3 className="text-2xl font-bold text-white mb-2">{caseStudy.title}</h3>
+                    <p className="text-white/70 mb-6">{caseStudy.description}</p>
+                    
+                    {/* Metrics */}
+                    {caseStudy.metrics && caseStudy.metrics.length > 0 && (
+                      <div className="grid grid-cols-3 gap-4 mb-6">
+                        {caseStudy.metrics.slice(0, 3).map((metric, i) => (
+                          <div key={i} className="text-center">
+                            <div className="text-2xl font-bold text-[#50a826]">{metric.value}</div>
+                            <div className="text-xs text-white/60 uppercase tracking-wider">{metric.label}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* CTA */}
+                    <motion.a
+                      href={`/case-studies/${caseStudy.id}`}
+                      className="flex items-center gap-2 text-[#50a826] font-medium group-hover:text-[#317e31] transition-colors"
+                      whileHover={{ x: 5 }}
+                    >
+                      <span>View Case Study</span>
+                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                    </motion.a>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              viewport={{ once: true }}
+              className="text-center mt-16"
+            >
+              <motion.a
+                href="/case-studies"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-flex items-center gap-2 px-8 py-4 rounded-lg bg-transparent border border-[#317e31] text-[#50a826] font-medium hover:bg-[#317e31]/10 transition-all"
+              >
+                View All Case Studies
+                <ArrowRight className="w-5 h-5" />
+              </motion.a>
+            </motion.div>
+          </>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-white/60">No case studies available at the moment.</p>
+          </div>
+        )}
       </div>
     </section>
   );

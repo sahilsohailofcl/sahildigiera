@@ -32,6 +32,12 @@ export default async function AdminDashboard() {
           >
             Blogs
           </Link>
+          <Link
+            href="/admin/dashboard/case-studies"
+            className="block py-2 px-4 rounded-lg hover:bg-white/10 transition duration-300"
+          >
+            Case Studies
+          </Link>
         </nav>
         <div className="mt-8">
           <LogoutButton />

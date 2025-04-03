@@ -17,18 +17,39 @@ model Client {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String   // Store hashed passwords only!
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         Int      @id @default(autoincrement())
+  email      String   @unique
+  password   String  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  caseStudies CaseStudy[]
 }
 
 model Blog {
   id          Int      @id @default(autoincrement())
   title       String
   description String
-  image       String?  // Optional field for image URL
+  image       String?
   date        DateTime @default(now())
   author      String
+}
+
+model CaseStudy {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  title       String
+  description String
+  category    String?
+  results     String[]
+  challenge   String?
+  solution    String?
+  technologies String[]
+  coverImage  String?
+  metrics     Json?   
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([category])
+  @@index([createdAt])
 }
