@@ -20,6 +20,7 @@ declare module "next-auth" {
       role: "ADMIN" | "CLIENT";
       stripeCustomerId?: string | null;
       subscription?: any;
+      trialEndsAt?: Date | null;
     } & DefaultSession["user"];
   }
 
@@ -28,6 +29,7 @@ declare module "next-auth" {
     role: "ADMIN" | "CLIENT";
     stripeCustomerId?: string | null;
     subscription?: any;
+    trialEndsAt?: Date | null;
   }
 }
 
@@ -37,6 +39,7 @@ declare module "next-auth/jwt" {
     role: "ADMIN" | "CLIENT";
     stripeCustomerId?: string | null;
     subscription?: any;
+    trialEndsAt?: Date | null;
   }
 }
 
