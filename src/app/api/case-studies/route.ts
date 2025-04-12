@@ -1,11 +1,17 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../../../../lib/auth';
+import { prisma } from '../../../../lib/prisma';
 
 // Handler for POST requests (creating a new case study)
 export async function POST(req: Request) {
     try {
+        const session = await getServerSession(authOptions);
+        
+        if (!session?.user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const body = await req.json();
         console.log("Received Body:", body); // Debugging log
 
@@ -31,6 +37,11 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "Title and description are required" }, { status: 400 });
         }
 
+        // Convert metrics to JSON if it's a string
+        const formattedMetrics = typeof metrics === 'string' 
+            ? JSON.parse(metrics) 
+            : metrics;
+
         const caseStudy = await prisma.caseStudy.create({
             data: {
                 title,
@@ -41,8 +52,8 @@ export async function POST(req: Request) {
                 solution: solution || null,
                 technologies: Array.isArray(technologies) ? technologies : [], // Ensure array format
                 coverImage: coverImage || null,
-                metrics: metrics || null,
-                userId: Number(userId), // Ensure userId is always a number
+                metrics: formattedMetrics,
+                userId: session.user.id, // Use the authenticated user's ID
             },
         });
 
@@ -56,15 +67,25 @@ export async function POST(req: Request) {
 // Handler for GET requests (fetching all case studies)
 export async function GET() {
     try {
-        const caseStudies = await prisma.caseStudy.findMany();
+        const caseStudies = await prisma.caseStudy.findMany({
+            include: {
+                user: {
+                    select: {
+                        name: true,
+                        company: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        });
+
         return NextResponse.json(caseStudies, { status: 200 });
     } catch (error) {
         console.error('Error fetching case studies:', error);
         return NextResponse.json(
-            {
-                message: 'Error fetching case studies',
-                error: error instanceof Error ? error.message : 'Unknown error'
-            },
+            { error: 'Failed to fetch case studies' },
             { status: 500 }
         );
     }

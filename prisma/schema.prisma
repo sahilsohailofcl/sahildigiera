@@ -7,22 +7,50 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Client {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   
-  message   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum UserRole {
+  ADMIN
+  CLIENT
 }
 
 model User {
-  id         Int      @id @default(autoincrement())
-  email      String   @unique
-  password   String  
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  caseStudies CaseStudy[]
+  id               String     @id @default(cuid())
+  email            String     @unique
+  password         String
+  name             String?
+  role             UserRole   @default(CLIENT)
+  stripeCustomerId String?    @unique
+  subscription     Json?
+  trialEndsAt      DateTime?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  caseStudies      CaseStudy[]
+  
+  // For clients
+  company          String?
+  phone            String?
+  
+  @@index([email])
+  @@index([role])
+}
+
+model CaseStudy {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  category    String?
+  results     String[]
+  challenge   String?
+  solution    String?
+  technologies String[]
+  coverImage  String?
+  metrics     Json?
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@index([createdAt])
 }
 
 model Blog {
@@ -32,24 +60,22 @@ model Blog {
   image       String?
   date        DateTime @default(now())
   author      String
-}
-
-model CaseStudy {
-  id          String   @id @default(cuid())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  title       String
-  description String
-  category    String?
-  results     String[]
-  challenge   String?
-  solution    String?
-  technologies String[]
-  coverImage  String?
-  metrics     Json?   
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
 
-  @@index([category])
-  @@index([createdAt])
+model ContactFormSubmission {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   
+  message   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model StripeEvent {
+  id        String   @id
+  type      String
+  data      Json
+  createdAt DateTime @default(now())
 }

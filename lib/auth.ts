@@ -1,23 +1,47 @@
-// src/lib/auth.ts
-import { NextAuthOptions, User, Session } from "next-auth";
+import { NextAuthOptions, User, Session, DefaultSession } from "next-auth";
 import { JWT } from "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaClient } from "@prisma/client";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { prisma } from "./prisma";
+import Stripe from "stripe";
 import bcrypt from "bcryptjs";
+import NextAuth from "next-auth";
+import { getServerSession } from "next-auth/next";
 
-const prisma = new PrismaClient();
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2025-03-31.basil',
+});
 
-// Extend User type to include 'id'
-interface ExtendedUser extends User {
-  id: string;
+// Extended types
+declare module "next-auth" {
+  interface Session extends DefaultSession {
+    user: {
+      id: string;
+      role: "ADMIN" | "CLIENT";
+      stripeCustomerId?: string | null;
+      subscription?: any;
+    } & DefaultSession["user"];
+  }
+
+  interface User {
+    id: string;
+    role: "ADMIN" | "CLIENT";
+    stripeCustomerId?: string | null;
+    subscription?: any;
+  }
 }
 
-// Extend Session type to include user.id
-interface ExtendedSession extends Session {
-  user: ExtendedUser;
+declare module "next-auth/jwt" {
+  interface JWT {
+    id: string;
+    role: "ADMIN" | "CLIENT";
+    stripeCustomerId?: string | null;
+    subscription?: any;
+  }
 }
 
 export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -37,52 +61,78 @@ export const authOptions: NextAuthOptions = {
         const isValid = await bcrypt.compare(credentials.password, user.password);
         if (!isValid) return null;
 
-        return { id: user.id, email: user.email } as unknown as ExtendedUser;
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          stripeCustomerId: user.stripeCustomerId,
+          subscription: user.subscription,
+          trialEndsAt: user.trialEndsAt,
+        };
       },
     }),
   ],
   pages: {
-    signIn: '/login',
-    signOut: '/login',
-    error: '/login',
+    signIn: "/login",
+    signOut: "/login",
+    error: "/login",
+  },
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  events: {
+    async createUser({ user }) {
+      if (user.email && user.name && user.role === "CLIENT") {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          name: user.name,
+        });
+
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { stripeCustomerId: customer.id },
+        });
+      }
+    },
   },
   callbacks: {
-    async jwt({ token, user }: { token: JWT; user?: ExtendedUser }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.role = user.role;
+        token.stripeCustomerId = user.stripeCustomerId;
+        token.subscription = user.subscription;
+        token.trialEndsAt = user.trialEndsAt;
       }
       return token;
     },
-    async session({ session, token }: { session: Session; token: JWT }) {
+    async session({ session, token }) {
       if (session.user) {
-        (session.user as ExtendedUser).id = token.id as string;
+        session.user.id = token.id;
+        session.user.role = token.role;
+        session.user.stripeCustomerId = token.stripeCustomerId;
+        session.user.subscription = token.subscription;
+        session.user.trialEndsAt = token.trialEndsAt;
       }
-      return session as ExtendedSession;
-    },
-    async redirect({ url, baseUrl }) {
-      // Use window.location.origin when available (client-side)
-      const host = typeof window !== 'undefined' 
-        ? window.location.origin 
-        : process.env.NEXTAUTH_URL || baseUrl;
-      
-      if (url.startsWith("/")) return `${host}${url}`;
-      if (new URL(url).origin === host) return url;
-      return host;
+      return session;
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
   jwt: {
     secret: process.env.JWT_SECRET,
   },
-  cookies: {
-    sessionToken: {
-      name: `${process.env.NODE_ENV === 'production' ? '__Secure-' : ''}next-auth.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
-      },
-    },
-  },
+};
+
+// Initialize NextAuth
+const handler = NextAuth(authOptions);
+
+// Export handlers for API routes
+export { handler as GET, handler as POST };
+
+// Server component helper
+export const getServerAuthSession = async () => {
+  const session = await getServerSession(authOptions);
+  return session;
 };

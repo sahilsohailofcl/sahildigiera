@@ -242,10 +242,11 @@ export const Header = () => {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => window.location.href = "/contact"}
-              className="px-6 py-2.5 rounded-lg font-medium text-white bg-[#317e31] hover:bg-[#3a8f3a] transition-all shadow-lg shadow-[#317e31]/20"
+              onClick={() => (window.location.href = "/login")}
+              className="px-6 py-2.5 rounded-lg font-medium text-white bg-[#317e31] hover:bg-[#3a8f3a] transition-all shadow-lg shadow-[#317e31]/20 flex items-center justify-center gap-2"
             >
-              Get a Quote
+              Get Started
+              <ArrowRight className="h-5 w-5" />
             </motion.button>
           </nav>
 
@@ -377,11 +378,12 @@ export const Header = () => {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => {
                   closeMenu();
-                  window.location.href = "/contact";
+                  window.location.href = "/login";
                 }}
-                className="mt-6 px-8 py-4 rounded-xl font-medium text-white bg-[#317e31] hover:bg-[#3a8f3a] transition-all text-xl text-center shadow-lg shadow-[#317e31]/30"
+                className="mt-6 px-8 py-4 rounded-xl font-medium text-white bg-[#317e31] hover:bg-[#3a8f3a] transition-all text-xl text-center shadow-lg shadow-[#317e31]/30 flex items-center justify-center gap-2"
               >
-                Get a Quote
+                Get Started
+                <ArrowRight className="h-6 w-6" />
               </motion.button>
             </nav>
           </motion.div>

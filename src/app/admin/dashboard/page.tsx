@@ -1,17 +1,19 @@
-// src/app/admin/dashboard/page.tsx
 import { getServerSession } from "next-auth";
-import { authOptions } from "../../../../lib/auth"; // Import from lib/auth.ts
+import { authOptions } from "../../../../lib/auth";
 import { redirect } from "next/navigation";
+import { UserRole } from "@prisma/client";
 import Link from "next/link";
-import LogoutButton from "./LogoutButton"; // Import the Client Component
+import LogoutButton from "./LogoutButton";
 
 export default async function AdminDashboard() {
-  // Fetch the session
   const session = await getServerSession(authOptions);
 
-  // Redirect if the user is not authenticated
-  if (!session) {
+  if (!session?.user) {
     redirect("/login");
+  }
+
+  if (session.user.role !== UserRole.ADMIN) {
+    redirect("/dashboard");
   }
 
   return (
@@ -51,4 +53,4 @@ export default async function AdminDashboard() {
       </div>
     </div>
   );
-}
+} 
