@@ -4,9 +4,18 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
+import { Adapter } from "next-auth/adapters";
+import { UserRole } from "@prisma/client";
+
+interface Subscription {
+  status?: string;
+  currentPeriodEnd?: string;
+  cancelAtPeriodEnd?: boolean;
+  plan?: string;
+}
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(prisma) as Adapter,
   session: {
     strategy: "jwt",
   },
@@ -54,7 +63,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           role: user.role,
-          subscription: user.subscription,
+          subscription: user.subscription as Subscription | null,
         };
       },
     }),
@@ -67,31 +76,35 @@ export const authOptions: NextAuthOptions = {
         session.user.email = token.email;
         session.user.role = token.role;
         session.user.trialEndsAt = token.trialEndsAt;
-        session.user.subscription = token.subscription;
+        session.user.subscription = token.subscription as Subscription | null;
       }
       return session;
     },
     async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+        token.subscription = user.subscription;
+      }
+
       const dbUser = await prisma.user.findFirst({
         where: {
-          email: token.email,
+          email: token.email!,
         },
       });
 
       if (!dbUser) {
-        if (user) {
-          token.id = user.id;
-        }
         return token;
       }
 
       return {
+        ...token,
         id: dbUser.id,
         name: dbUser.name,
         email: dbUser.email,
         role: dbUser.role,
         trialEndsAt: dbUser.trialEndsAt,
-        subscription: dbUser.subscription,
+        subscription: dbUser.subscription as Subscription | null,
       };
     },
   },
