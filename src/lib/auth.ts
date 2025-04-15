@@ -6,6 +6,7 @@ import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
 import { Adapter } from "next-auth/adapters";
 import { UserRole } from "@prisma/client";
+import { JWT } from "next-auth/jwt";
 
 interface Subscription {
   status?: string;
@@ -13,6 +14,14 @@ interface Subscription {
   cancelAtPeriodEnd?: boolean;
   plan?: string;
 }
+
+// Override the JWT type instead of extending it
+type CustomJWT = JWT & {
+  id: string;
+  role: UserRole;
+  trialEndsAt: string | null;
+  subscription: Subscription | null;
+};
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as Adapter,
@@ -81,31 +90,33 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async jwt({ token, user }) {
+      const customToken = token as CustomJWT;
+
       if (user) {
-        token.id = user.id;
-        token.role = user.role;
-        token.subscription = user.subscription;
+        customToken.id = user.id;
+        customToken.role = user.role;
+        customToken.subscription = user.subscription as Subscription | null;
       }
 
       const dbUser = await prisma.user.findFirst({
         where: {
-          email: token.email!,
+          email: customToken.email!,
         },
       });
 
       if (!dbUser) {
-        return token;
+        return customToken;
       }
 
       return {
-        ...token,
+        ...customToken,
         id: dbUser.id,
         name: dbUser.name,
         email: dbUser.email,
         role: dbUser.role,
-        trialEndsAt: dbUser.trialEndsAt,
+        trialEndsAt: dbUser.trialEndsAt?.toISOString() || null,
         subscription: dbUser.subscription as Subscription | null,
-      };
+      } as CustomJWT;
     },
   },
 }; 
