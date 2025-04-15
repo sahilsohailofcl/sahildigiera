@@ -10,6 +10,12 @@ declare module "next-auth" {
       image?: string | null;
       role: UserRole;
       trialEndsAt?: string | null;
+      subscription?: {
+        status?: string;
+        currentPeriodEnd?: string;
+        cancelAtPeriodEnd?: boolean;
+        plan?: string;
+      } | null;
     };
   }
 
@@ -19,6 +25,12 @@ declare module "next-auth" {
     email?: string | null;
     role: UserRole;
     trialEndsAt?: string | null;
+    subscription?: {
+      status?: string;
+      currentPeriodEnd?: string;
+      cancelAtPeriodEnd?: boolean;
+      plan?: string;
+    } | null;
   }
 }
 
@@ -29,5 +41,11 @@ declare module "next-auth/jwt" {
     email?: string | null;
     role: UserRole;
     trialEndsAt?: string | null;
+    subscription?: {
+      status?: string;
+      currentPeriodEnd?: string;
+      cancelAtPeriodEnd?: boolean;
+      plan?: string;
+    } | null;
   }
 } 

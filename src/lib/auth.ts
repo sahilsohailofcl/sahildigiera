@@ -54,6 +54,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           role: user.role,
+          subscription: user.subscription,
         };
       },
     }),
@@ -66,6 +67,7 @@ export const authOptions: NextAuthOptions = {
         session.user.email = token.email;
         session.user.role = token.role;
         session.user.trialEndsAt = token.trialEndsAt;
+        session.user.subscription = token.subscription;
       }
       return session;
     },
@@ -89,6 +91,7 @@ export const authOptions: NextAuthOptions = {
         email: dbUser.email,
         role: dbUser.role,
         trialEndsAt: dbUser.trialEndsAt,
+        subscription: dbUser.subscription,
       };
     },
   },
