@@ -3,6 +3,15 @@ import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import { UserRole } from '@prisma/client';
 
+// Define the token type
+interface Token {
+  role?: UserRole;
+  subscription?: {
+    status?: string;
+  };
+  trialEndsAt?: string;
+}
+
 export default async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
   
@@ -13,7 +22,7 @@ export default async function middleware(req: NextRequest) {
   }
 
   // Get the session token
-  const token = await getToken({ req });
+  const token = await getToken({ req }) as Token;
   
   // Redirect to login if not authenticated
   if (!token) {
