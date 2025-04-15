@@ -1,8 +1,8 @@
 // app/api/trial/route.ts
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../../../lib/auth';
-import { prisma } from '../../../../lib/prisma';
+import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(req: Request) {
   try {
@@ -12,6 +12,10 @@ export async function POST(req: Request) {
       console.error('Trial error: No session found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Get the selected plan from the request body
+    const { plan } = await req.json();
+    const selectedPlan = plan || 'discovery';
 
     console.log('Session user:', session.user);
 
@@ -38,11 +42,16 @@ export async function POST(req: Request) {
 
     // Check if user already has a trial
     if (user.trialEndsAt && new Date(user.trialEndsAt) > new Date()) {
-      console.error('Trial error: User already has an active trial');
-      return NextResponse.json(
-        { error: 'You already have an active trial' },
-        { status: 400 }
-      );
+      console.log('User already has an active trial, returning current trial info');
+      return NextResponse.json({
+        message: 'You already have an active trial',
+        trial: {
+          status: 'trialing',
+          trialEndsAt: user.trialEndsAt,
+          trialStartedAt: user.trialStartedAt,
+          plan: user.subscription?.plan || selectedPlan
+        }
+      });
     }
 
     // Set trial end date (14 days from now)
@@ -54,7 +63,7 @@ export async function POST(req: Request) {
       status: 'trialing',
       trialEndsAt: trialEndsAt.toISOString(),
       trialStartedAt: new Date().toISOString(),
-      plan: 'discovery'
+      plan: selectedPlan
     };
 
     console.log('Creating trial subscription:', trialSubscription);
@@ -70,7 +79,15 @@ export async function POST(req: Request) {
 
     console.log('Updated user:', { id: updatedUser.id, subscription: updatedUser.subscription });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      trial: {
+        status: 'trialing',
+        trialEndsAt: updatedUser.trialEndsAt,
+        trialStartedAt: updatedUser.trialStartedAt,
+        plan: updatedUser.subscription?.plan || selectedPlan
+      }
+    });
   } catch (error) {
     console.error('Trial error:', error);
     return NextResponse.json(

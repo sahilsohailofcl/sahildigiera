@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth";
-import { authOptions } from "../../../../lib/auth";
+import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { UserRole } from "@prisma/client";
 import Link from "next/link";

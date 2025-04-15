@@ -1,10 +1,11 @@
 // app/dashboard/page.tsx
-import { getServerAuthSession } from '../../../lib/auth';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { UserRole } from '@prisma/client';
 
 export default async function Dashboard() {
-  const session = await getServerAuthSession();
+  const session = await getServerSession(authOptions);
 
   if (!session?.user) {
     redirect('/login');

@@ -141,16 +141,24 @@ export default function PricingPage() {
           headers: {
             "Content-Type": "application/json",
           },
+          body: JSON.stringify({
+            plan: "discovery"
+          }),
         });
 
-        if (!response.ok) {
-          const data = await response.json();
+        const data = await response.json();
+
+        if (!response.ok && !data.trial) {
           throw new Error(data.error || "Failed to start trial");
         }
 
-        // Redirect to dashboard after successful trial creation
-        router.push("/dashboard");
-        return;
+        // If we have trial data (either new or existing), redirect to dashboard
+        if (data.trial || data.success) {
+          router.push("/dashboard");
+          return;
+        }
+
+        throw new Error("Unexpected response from trial API");
       } else if (planTitle === "Elite") {
         router.push("/contact");
         return;

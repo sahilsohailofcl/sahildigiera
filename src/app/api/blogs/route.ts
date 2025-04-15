@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { uploadToCloudinary } from "../../../../utils/cloudinary";
+import { uploadToCloudinary } from "@/lib/utils/cloudinary";
 
 const prisma = new PrismaClient();
 

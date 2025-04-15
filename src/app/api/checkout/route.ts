@@ -1,4 +1,4 @@
-import { stripe } from '../../../../lib/stripe/client';
+import { stripe } from '@/lib/stripe/client';
 import { getToken } from 'next-auth/jwt';
 import type { NextRequest } from 'next/server';
 

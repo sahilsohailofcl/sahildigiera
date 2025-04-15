@@ -1,8 +1,8 @@
 // app/api/signup/route.ts
 import { NextResponse } from 'next/server';
-import { prisma } from '../../../../lib/prisma';
+import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import { stripe } from '../../../../lib/stripe/client';
+import { stripe } from '@/lib/stripe/client';
 
 export async function POST(request: Request) {
   const { name, email, company, password, plan } = await request.json();
@@ -23,6 +23,24 @@ export async function POST(request: Request) {
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Set trial dates if it's the discovery plan
+    let trialData = {};
+    if (plan === 'discovery') {
+      const trialEndsAt = new Date();
+      trialEndsAt.setDate(trialEndsAt.getDate() + 14);
+      
+      trialData = {
+        trialEndsAt,
+        trialStartedAt: new Date(),
+        subscription: {
+          status: 'trialing',
+          trialEndsAt: trialEndsAt.toISOString(),
+          trialStartedAt: new Date().toISOString(),
+          plan: 'discovery'
+        }
+      };
+    }
+
     // Create user in database
     const user = await prisma.user.create({
       data: {
@@ -31,6 +49,7 @@ export async function POST(request: Request) {
         name,
         company,
         role: "CLIENT",
+        ...trialData
       }
     });
 
@@ -53,7 +72,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ 
       success: true, 
       userId: user.id,
-      message: 'Account created successfully'
+      message: 'Account created successfully',
+      trial: plan === 'discovery' ? {
+        status: 'trialing',
+        trialEndsAt: user.trialEndsAt,
+        trialStartedAt: user.trialStartedAt,
+        plan: 'discovery'
+      } : undefined
     });
   } catch (err: unknown) {
     console.error('Signup error:', err);
