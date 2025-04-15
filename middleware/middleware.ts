@@ -55,4 +55,8 @@ export const config = {
     '/account/:path*',
     '/pricing',
   ],
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> b340d51e6ab5dacdae3b8772f23743a3ab801c2c

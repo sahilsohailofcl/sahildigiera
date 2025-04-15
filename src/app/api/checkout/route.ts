@@ -2,6 +2,18 @@ import { NextResponse } from 'next/server';
 import { stripe } from '../../../../lib/stripe/client';
 import { getToken } from 'next-auth/jwt';
 import type { NextRequest } from 'next/server';
+<<<<<<< HEAD
+=======
+
+export async function POST(req: NextRequest) {
+  const token = await getToken({ req });
+  
+  if (!token?.id) {
+    return new NextResponse('Unauthorized', { status: 401 });
+  }
+
+  const { priceId } = await req.json();
+>>>>>>> b340d51e6ab5dacdae3b8772f23743a3ab801c2c
 
 export async function POST(req: NextRequest) {
   try {
