@@ -4,6 +4,13 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
+interface Subscription {
+  status?: string;
+  plan?: string;
+  trialEndsAt?: string;
+  trialStartedAt?: string;
+}
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -32,7 +39,8 @@ export async function POST(req: Request) {
     console.log('Found user:', { id: user.id, subscription: user.subscription });
 
     // Check if user already has an active subscription
-    if (user.subscription && typeof user.subscription === 'object' && (user.subscription as any).status === 'active') {
+    const subscription = user.subscription as Subscription | null;
+    if (subscription?.status === 'active') {
       console.error('Trial error: User already has an active subscription');
       return NextResponse.json(
         { error: 'You already have an active subscription' },
@@ -49,7 +57,7 @@ export async function POST(req: Request) {
           status: 'trialing',
           trialEndsAt: user.trialEndsAt,
           trialStartedAt: user.trialStartedAt,
-          plan: user.subscription?.plan || selectedPlan
+          plan: subscription?.plan || selectedPlan
         }
       });
     }
