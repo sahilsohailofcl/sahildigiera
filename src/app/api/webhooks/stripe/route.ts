@@ -35,8 +35,8 @@ export async function POST(req: Request) {
           data: {
             subscription: {
               status: subscription.status,
-              currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-              cancelAtPeriodEnd: subscription.cancel_at_period_end,
+              currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
+              cancelAtPeriodEnd: (subscription as any).cancel_at_period_end,
               plan: subscription.items.data[0].price.id,
             },
           },
