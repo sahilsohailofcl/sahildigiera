@@ -1,35 +1,23 @@
-import { NextResponse } from 'next/server';
 import { stripe } from '../../../../lib/stripe/client';
 import { getToken } from 'next-auth/jwt';
 import type { NextRequest } from 'next/server';
-<<<<<<< HEAD
-=======
-
-export async function POST(req: NextRequest) {
-  const token = await getToken({ req });
-  
-  if (!token?.id) {
-    return new NextResponse('Unauthorized', { status: 401 });
-  }
-
-  const { priceId } = await req.json();
->>>>>>> b340d51e6ab5dacdae3b8772f23743a3ab801c2c
 
 export async function POST(req: NextRequest) {
   try {
     const token = await getToken({ req });
     
-    if (!token?.id) {
-      return new NextResponse('Unauthorized', { status: 401 });
+    if (!token) {
+      return new Response('Unauthorized', { status: 401 });
     }
 
     const { priceId, billingPeriod } = await req.json();
 
     if (!priceId) {
-      return new NextResponse('Price ID is required', { status: 400 });
+      return new Response('Price ID is required', { status: 400 });
     }
 
-    const checkoutSession = await stripe.checkout.sessions.create({
+    const session = await stripe.checkout.sessions.create({
+      customer: token.stripeCustomerId as string,
       mode: 'subscription',
       payment_method_types: ['card'],
       line_items: [
@@ -38,17 +26,16 @@ export async function POST(req: NextRequest) {
           quantity: 1,
         },
       ],
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/pricing`,
-      customer: token.stripeCustomerId as string,
-      metadata: {
-        userId: token.id,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?success=true`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/pricing?canceled=true`,
+      subscription_data: {
+        trial_period_days: billingPeriod === 'annual' ? 30 : 14,
       },
     });
 
-    return NextResponse.json({ id: checkoutSession.id });
+    return Response.json({ id: session.id });
   } catch (error) {
-    console.error('Stripe error:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    console.error('Checkout error:', error);
+    return new Response('Internal Server Error', { status: 500 });
   }
 }

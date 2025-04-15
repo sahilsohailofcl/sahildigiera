@@ -1,13 +1,17 @@
+import { stripe } from '../../../../lib/stripe/client';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { stripe } from '../../../../../lib/stripe/client';
-import { prisma } from '../../../../../lib/prisma';
+import { prisma } from '../../../../lib/prisma';
 
 export async function POST(req: Request) {
   const body = await req.text();
-  const signature = headers().get('Stripe-Signature') as string;
+  const signature = headers().get('stripe-signature');
 
-  let event: Stripe.Event;
+  if (!signature) {
+    return new NextResponse('No signature', { status: 400 });
+  }
+
+  let event;
 
   try {
     event = stripe.webhooks.constructEvent(
@@ -16,36 +20,42 @@ export async function POST(req: Request) {
       process.env.STRIPE_WEBHOOK_SECRET!
     );
   } catch (err) {
-    return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 });
+    console.error('Webhook error:', err);
+    return new NextResponse('Webhook error', { status: 400 });
   }
 
-  const session = event.data.object as Stripe.Checkout.Session;
+  try {
+    switch (event.type) {
+      case 'customer.subscription.created':
+      case 'customer.subscription.updated':
+        const subscription = event.data.object;
+        await prisma.user.update({
+          where: { stripeCustomerId: subscription.customer as string },
+          data: {
+            subscription: {
+              status: subscription.status,
+              currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+              cancelAtPeriodEnd: subscription.cancel_at_period_end,
+              plan: subscription.items.data[0].price.id,
+            },
+          },
+        });
+        break;
 
-  if (event.type === 'checkout.session.completed') {
-    const userId = session.metadata?.userId;
-
-    if (!userId) {
-      return new NextResponse('User id is required', { status: 400 });
+      case 'customer.subscription.deleted':
+        const deletedSubscription = event.data.object;
+        await prisma.user.update({
+          where: { stripeCustomerId: deletedSubscription.customer as string },
+          data: {
+            subscription: null,
+          },
+        });
+        break;
     }
 
-    // Convert Stripe objects to plain objects
-    const subscriptionData = {
-      status: 'active',
-      customerId: typeof session.customer === 'string' ? session.customer : session.customer?.id,
-      subscriptionId: typeof session.subscription === 'string' ? session.subscription : session.subscription?.id,
-    };
-
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        subscription: subscriptionData,
-      },
-    });
+    return new NextResponse(null, { status: 200 });
+  } catch (error) {
+    console.error('Webhook processing error:', error);
+    return new NextResponse('Webhook processing error', { status: 500 });
   }
-
-  return new NextResponse(null, { status: 200 });
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> b340d51e6ab5dacdae3b8772f23743a3ab801c2c
