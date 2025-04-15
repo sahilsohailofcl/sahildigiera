@@ -2,6 +2,7 @@ import { stripe } from '@/lib/stripe/client';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import Stripe from 'stripe';
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -11,7 +12,7 @@ export async function POST(req: Request) {
     return new NextResponse('No signature', { status: 400 });
   }
 
-  let event;
+  let event: Stripe.Event;
 
   try {
     event = stripe.webhooks.constructEvent(
@@ -28,7 +29,7 @@ export async function POST(req: Request) {
     switch (event.type) {
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
-        const subscription = event.data.object;
+        const subscription = event.data.object as Stripe.Subscription;
         await prisma.user.update({
           where: { stripeCustomerId: subscription.customer as string },
           data: {
@@ -43,7 +44,7 @@ export async function POST(req: Request) {
         break;
 
       case 'customer.subscription.deleted':
-        const deletedSubscription = event.data.object;
+        const deletedSubscription = event.data.object as Stripe.Subscription;
         await prisma.user.update({
           where: { stripeCustomerId: deletedSubscription.customer as string },
           data: {
