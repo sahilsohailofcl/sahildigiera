@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import Stripe from 'stripe';
+import { Prisma } from '@prisma/client';
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -48,7 +49,7 @@ export async function POST(req: Request) {
         await prisma.user.update({
           where: { stripeCustomerId: deletedSubscription.customer as string },
           data: {
-            subscription: null,
+            subscription: Prisma.JsonNull,
           },
         });
         break;
