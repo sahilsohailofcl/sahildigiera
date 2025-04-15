@@ -1,34 +1,35 @@
-import { auth } from '../lib/auth';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { getToken } from 'next-auth/jwt';
 import { UserRole } from '@prisma/client';
 
-export default auth(async (req: { nextUrl: { pathname: any; }; url: string | URL | undefined; }) => {
+export default async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
-  // Use the auth property from the request augmented by NextAuth
-  const session = (req as any).auth;
-
+  
   // Public routes
   const publicRoutes = ['/', '/login', '/signup', '/pricing'];
   if (publicRoutes.includes(pathname)) {
     return NextResponse.next();
   }
 
+  // Get the session token
+  const token = await getToken({ req });
+  
   // Redirect to login if not authenticated
-  if (!session?.user) {
+  if (!token) {
     return NextResponse.redirect(new URL('/login', req.url));
   }
 
   // Admin route protection
-  if (pathname.startsWith('/admin') && session.user.role !== UserRole.ADMIN) {
+  if (pathname.startsWith('/admin') && token.role !== UserRole.ADMIN) {
     return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 
   // Client route protection
-  if (pathname.startsWith('/dashboard') && session.user.role !== UserRole.CLIENT) {
+  if (pathname.startsWith('/dashboard') && token.role !== UserRole.CLIENT) {
     return NextResponse.redirect(
-      session.user.role === UserRole.ADMIN
-        ? new URL('/admin', req.url)
+      token.role === UserRole.ADMIN
+        ? new URL('/admin/dashboard', req.url)
         : new URL('/login', req.url)
     );
   }
@@ -36,8 +37,8 @@ export default auth(async (req: { nextUrl: { pathname: any; }; url: string | URL
   // Check subscription/trial status for protected routes
   const protectedRoutes = ['/dashboard', '/account'];
   if (protectedRoutes.some(route => pathname.startsWith(route))) {
-    const hasActiveSubscription = session.user.subscription?.status === 'active';
-    const isInTrial = session.user.trialEndsAt && new Date(session.user.trialEndsAt) > new Date();
+    const hasActiveSubscription = token.subscription?.status === 'active';
+    const isInTrial = token.trialEndsAt && new Date(token.trialEndsAt) > new Date();
 
     if (!hasActiveSubscription && !isInTrial) {
       return NextResponse.redirect(new URL('/pricing', req.url));
@@ -45,8 +46,13 @@ export default auth(async (req: { nextUrl: { pathname: any; }; url: string | URL
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    '/dashboard/:path*',
+    '/admin/:path*',
+    '/account/:path*',
+    '/pricing',
+  ],
 };

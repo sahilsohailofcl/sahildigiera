@@ -1,32 +1,36 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '../../../../lib/stripe/client';
-import { auth } from '../../../../lib/auth';
+import { getToken } from 'next-auth/jwt';
+import type { NextRequest } from 'next/server';
 
-export async function POST(req: Request) {
-  // Create a mock request object for auth()
-  const mockRequest = {
-    headers: new Headers(),
-    nextUrl: new URL(req.url || '/', process.env.NEXT_PUBLIC_SITE_URL)
-  } as any;
-
-  const session = await auth(mockRequest);
-  
-  if (!session?.user?.id) {
-    return new NextResponse('Unauthorized', { status: 401 });
-  }
-
-  const { priceId } = await req.json();
-
+export async function POST(req: NextRequest) {
   try {
+    const token = await getToken({ req });
+    
+    if (!token?.id) {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
+
+    const { priceId, billingPeriod } = await req.json();
+
+    if (!priceId) {
+      return new NextResponse('Price ID is required', { status: 400 });
+    }
+
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/pricing`,
-      customer: session.user.stripeCustomerId,
+      customer: token.stripeCustomerId as string,
       metadata: {
-        userId: session.user.id,
+        userId: token.id,
       },
     });
 

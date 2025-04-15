@@ -21,6 +21,7 @@ model User {
   stripeCustomerId String?    @unique
   subscription     Json?
   trialEndsAt      DateTime?
+  trialStartedAt   DateTime?
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
   caseStudies      CaseStudy[]

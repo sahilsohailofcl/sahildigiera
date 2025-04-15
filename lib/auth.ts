@@ -20,6 +20,7 @@ declare module "next-auth" {
       role: "ADMIN" | "CLIENT";
       stripeCustomerId?: string | null;
       subscription?: any;
+      trialEndsAt?: Date | null;
     } & DefaultSession["user"];
   }
 
@@ -28,6 +29,7 @@ declare module "next-auth" {
     role: "ADMIN" | "CLIENT";
     stripeCustomerId?: string | null;
     subscription?: any;
+    trialEndsAt?: Date | null;
   }
 }
 
@@ -37,6 +39,7 @@ declare module "next-auth/jwt" {
     role: "ADMIN" | "CLIENT";
     stripeCustomerId?: string | null;
     subscription?: any;
+    trialEndsAt?: Date | null;
   }
 }
 
@@ -105,6 +108,16 @@ export const authOptions: NextAuthOptions = {
         token.stripeCustomerId = user.stripeCustomerId;
         token.subscription = user.subscription;
         token.trialEndsAt = user.trialEndsAt;
+      } else {
+        // Fetch the latest user data on each token refresh
+        const latestUser = await prisma.user.findUnique({
+          where: { id: token.id }
+        });
+        if (latestUser) {
+          token.subscription = latestUser.subscription;
+          token.trialEndsAt = latestUser.trialEndsAt;
+          token.stripeCustomerId = latestUser.stripeCustomerId;
+        }
       }
       return token;
     },
