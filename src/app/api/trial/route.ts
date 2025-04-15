@@ -87,13 +87,15 @@ export async function POST(req: Request) {
 
     console.log('Updated user:', { id: updatedUser.id, subscription: updatedUser.subscription });
 
+    const updatedSubscription = updatedUser.subscription as Subscription | null;
+
     return NextResponse.json({
       success: true,
       trial: {
         status: 'trialing',
         trialEndsAt: updatedUser.trialEndsAt,
         trialStartedAt: updatedUser.trialStartedAt,
-        plan: updatedUser.subscription?.plan || selectedPlan
+        plan: updatedSubscription?.plan || selectedPlan
       }
     });
   } catch (error) {
