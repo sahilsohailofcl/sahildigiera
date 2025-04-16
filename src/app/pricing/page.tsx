@@ -155,9 +155,14 @@ export default function PricingPage() {
     }).format(price);
   };
 
-  const handlePlanSelect = async (priceId: string, planTitle: string) => {
+  const handlePlanSelect = async (priceId: string | undefined, planTitle: string) => {
     if (!session) {
       router.push("/login");
+      return;
+    }
+
+    if (!priceId) {
+      setError("Price ID is not available for this plan");
       return;
     }
 
@@ -346,7 +351,7 @@ export default function PricingPage() {
                 </div>
 
                 <motion.button
-                  onClick={() => handlePlanSelect(tier.priceId, tier.title)}
+                  onClick={() => tier.priceId ? handlePlanSelect(tier.priceId, tier.title) : setError("Price ID is not available for this plan")}
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   className={twMerge(

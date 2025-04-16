@@ -16,6 +16,8 @@ declare module "next-auth" {
         cancelAtPeriodEnd?: boolean;
         plan?: string;
       } | null;
+      stripeCustomerId?: string | null;
+      hasSelectedPlan: boolean;
     };
   }
 
@@ -31,6 +33,8 @@ declare module "next-auth" {
       cancelAtPeriodEnd?: boolean;
       plan?: string;
     } | null;
+    stripeCustomerId?: string | null;
+    hasSelectedPlan: boolean;
   }
 }
 
@@ -47,5 +51,7 @@ declare module "next-auth/jwt" {
       cancelAtPeriodEnd?: boolean;
       plan?: string;
     } | null;
+    stripeCustomerId?: string | null;
+    hasSelectedPlan: boolean;
   }
 } 

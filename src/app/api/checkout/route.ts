@@ -28,18 +28,17 @@ export async function POST(req: NextRequest) {
     if (priceId === process.env.NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID) {
       console.log('Processing starter plan...');
       
-      // Update user's plan selection status
-      await prisma.user.update({
-        where: { id: token.sub as string },
-        data: {
-          hasSelectedPlan: true,
-          subscription: {
-            status: 'active',
-            plan: 'starter',
-            currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-          },
-        },
-      });
+      // Update user's plan selection status using raw SQL
+      await prisma.$executeRaw`
+        UPDATE "User"
+        SET "hasSelectedPlan" = true,
+            "subscription" = jsonb_build_object(
+              'status', 'active',
+              'plan', 'starter',
+              'currentPeriodEnd', ${new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)}
+            )
+        WHERE id = ${token.sub}
+      `;
 
       return Response.json({ 
         success: true, 

@@ -15,13 +15,25 @@ interface Subscription {
   plan?: string;
 }
 
+interface UserWithFields {
+  id: string;
+  email: string;
+  name: string | null;
+  role: UserRole;
+  subscription: Subscription | null;
+  stripeCustomerId: string | null;
+  hasSelectedPlan: boolean;
+  trialEndsAt: Date | null;
+  password: string;
+}
+
 // Override the JWT type instead of extending it
 type CustomJWT = JWT & {
   id: string;
   role: UserRole;
   trialEndsAt: string | null;
   subscription: Subscription | null;
-  stripeCustomerId?: string;
+  stripeCustomerId?: string | null;
   hasSelectedPlan: boolean;
 };
 
@@ -54,7 +66,7 @@ export const authOptions: NextAuthOptions = {
           where: {
             email: credentials.email,
           },
-        });
+        }) as unknown as UserWithFields;
 
         if (!user || !user.password) {
           throw new Error("Invalid credentials");
@@ -74,7 +86,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           role: user.role,
-          subscription: user.subscription as Subscription | null,
+          subscription: user.subscription,
           stripeCustomerId: user.stripeCustomerId,
           hasSelectedPlan: user.hasSelectedPlan,
         };
@@ -110,7 +122,7 @@ export const authOptions: NextAuthOptions = {
         where: {
           email: customToken.email!,
         },
-      });
+      }) as unknown as UserWithFields;
 
       if (!dbUser) {
         return customToken;
@@ -123,7 +135,7 @@ export const authOptions: NextAuthOptions = {
         email: dbUser.email,
         role: dbUser.role,
         trialEndsAt: dbUser.trialEndsAt?.toISOString() || null,
-        subscription: dbUser.subscription as Subscription | null,
+        subscription: dbUser.subscription,
         stripeCustomerId: dbUser.stripeCustomerId,
         hasSelectedPlan: dbUser.hasSelectedPlan,
       } as CustomJWT;
