@@ -16,6 +16,7 @@ async function main() {
       password: adminPassword,
       name: "Admin User",
       role: UserRole.ADMIN,
+      hasSelectedPlan: false,
     },
   });
 
@@ -30,6 +31,7 @@ async function main() {
       role: UserRole.CLIENT,
       company: "Example Corp",
       phone: "+1234567890",
+      hasSelectedPlan: false,
     },
   });
 

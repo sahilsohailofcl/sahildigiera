@@ -21,6 +21,8 @@ type CustomJWT = JWT & {
   role: UserRole;
   trialEndsAt: string | null;
   subscription: Subscription | null;
+  stripeCustomerId?: string;
+  hasSelectedPlan: boolean;
 };
 
 export const authOptions: NextAuthOptions = {
@@ -73,6 +75,8 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           role: user.role,
           subscription: user.subscription as Subscription | null,
+          stripeCustomerId: user.stripeCustomerId,
+          hasSelectedPlan: user.hasSelectedPlan,
         };
       },
     }),
@@ -86,6 +90,8 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role;
         session.user.trialEndsAt = token.trialEndsAt;
         session.user.subscription = token.subscription as Subscription | null;
+        session.user.stripeCustomerId = token.stripeCustomerId;
+        session.user.hasSelectedPlan = token.hasSelectedPlan;
       }
       return session;
     },
@@ -96,6 +102,8 @@ export const authOptions: NextAuthOptions = {
         customToken.id = user.id;
         customToken.role = user.role;
         customToken.subscription = user.subscription as Subscription | null;
+        customToken.stripeCustomerId = user.stripeCustomerId;
+        customToken.hasSelectedPlan = user.hasSelectedPlan;
       }
 
       const dbUser = await prisma.user.findFirst({
@@ -116,7 +124,20 @@ export const authOptions: NextAuthOptions = {
         role: dbUser.role,
         trialEndsAt: dbUser.trialEndsAt?.toISOString() || null,
         subscription: dbUser.subscription as Subscription | null,
+        stripeCustomerId: dbUser.stripeCustomerId,
+        hasSelectedPlan: dbUser.hasSelectedPlan,
       } as CustomJWT;
+    },
+    async redirect({ url, baseUrl }) {
+      // Handle new user redirection
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+      // Handle external URLs
+      else if (url.startsWith(baseUrl)) {
+        return url;
+      }
+      return baseUrl;
     },
   },
 }; 

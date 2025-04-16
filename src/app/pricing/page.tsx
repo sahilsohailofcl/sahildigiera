@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { twMerge } from "tailwind-merge";
 import { PricingCard } from '@/components/PricingCard';
 import { useSession } from "next-auth/react";
+import { Button } from '@/components/ui/button';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -24,7 +25,7 @@ const combinedPricingTiers = [
       "1 blog or audit guide on their business",
       "Basic Analytics Setup"
     ],
-    priceId: "discovery",
+    priceId: process.env.NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID,
     accentColor: "#317e31",
     buttonText: "Get Started"
   },
@@ -44,7 +45,7 @@ const combinedPricingTiers = [
       "Basic support (email / 1 call per month)",
       "5-day delivery turnaround"
     ],
-    priceId: process.env.NEXT_PUBLIC_STRIPE_GROWTH_PRICE_ID!,
+    priceId: process.env.NEXT_PUBLIC_STRIPE_GROWTH_PRICE_ID,
     accentColor: "#50a826",
     buttonText: "Start Launching",
     popular: true
@@ -70,7 +71,7 @@ const combinedPricingTiers = [
       "Priority live chat",
       "2 calls/month"
     ],
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID!,
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID,
     accentColor: "#45b645",
     buttonText: "Start Growing"
   },
@@ -97,10 +98,40 @@ const combinedPricingTiers = [
       "Weekly progress calls",
       "24/7 Priority Support via Slack/WhatsApp"
     ],
-    priceId: process.env.NEXT_PUBLIC_STRIPE_ENTERPRISE_PRICE_ID!,
+    priceId: process.env.NEXT_PUBLIC_STRIPE_ENTERPRISE_PRICE_ID,
     accentColor: "#3a8f3a",
     buttonText: "Contact Sales"
   }
+];
+
+const plans = [
+  {
+    name: 'Monthly',
+    price: '$9.99',
+    description: 'Perfect for trying out our service',
+    features: [
+      'All basic features',
+      'Email support',
+      '1GB storage',
+      'Basic analytics',
+    ],
+    priceId: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID,
+    billingPeriod: 'monthly',
+  },
+  {
+    name: 'Annual',
+    price: '$99.99',
+    description: 'Best value for long-term users',
+    features: [
+      'All premium features',
+      'Priority support',
+      '10GB storage',
+      'Advanced analytics',
+      '2 months free',
+    ],
+    priceId: process.env.NEXT_PUBLIC_STRIPE_ANNUAL_PRICE_ID,
+    billingPeriod: 'annual',
+  },
 ];
 
 export default function PricingPage() {
@@ -134,31 +165,27 @@ export default function PricingPage() {
     setError("");
 
     try {
-      if (priceId === "discovery") {
-        // For $0 plan, create a trial subscription
+      if (priceId === process.env.NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID) {
+        // For Starter plan, create a trial subscription
         const response = await fetch("/api/trial", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            plan: "discovery"
+            plan: "starter"
           }),
         });
 
         const data = await response.json();
 
-        if (!response.ok && !data.trial) {
+        if (!response.ok) {
           throw new Error(data.error || "Failed to start trial");
         }
 
-        // If we have trial data (either new or existing), redirect to dashboard
-        if (data.trial || data.success) {
-          router.push("/dashboard");
-          return;
-        }
-
-        throw new Error("Unexpected response from trial API");
+        // Redirect to dashboard after successful trial creation
+        router.push("/dashboard");
+        return;
       } else if (planTitle === "Elite") {
         router.push("/contact");
         return;
@@ -182,24 +209,21 @@ export default function PricingPage() {
         throw new Error(data.error || "Failed to create checkout session");
       }
 
-      // Redirect to Stripe Checkout
-      const stripe = await stripePromise;
-      if (!stripe) {
-        throw new Error("Stripe failed to initialize");
-      }
-
-      const { error } = await stripe.redirectToCheckout({
-        sessionId: data.id
-      });
-
-      if (error) {
-        throw error;
+      // Redirect to Stripe Checkout URL
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("No checkout URL received");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubscribe = (priceId: string, billingPeriod: string) => {
+    router.push(`/checkout?priceId=${priceId}&billingPeriod=${billingPeriod}`);
   };
 
   return (

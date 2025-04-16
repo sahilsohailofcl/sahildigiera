@@ -91,12 +91,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      trial: {
-        status: 'trialing',
-        trialEndsAt: updatedUser.trialEndsAt,
-        trialStartedAt: updatedUser.trialStartedAt,
-        plan: updatedSubscription?.plan || selectedPlan
-      }
+      message: 'Trial started successfully',
+      redirectUrl: '/dashboard'
     });
   } catch (error) {
     console.error('Trial error:', error);
