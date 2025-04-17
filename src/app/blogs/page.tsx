@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { Header } from "../sections/Header";
@@ -30,10 +30,6 @@ export default function Blogs() {
   const [currentPage, setCurrentPage] = useState(1);
   const blogsPerPage = 9;
   const router = useRouter();
-  const searchRef = useRef<HTMLInputElement>(null);
-
-  // Extract all unique tags from blogs
-  const allTags = Array.from(new Set(blogs.flatMap(blog => blog.tags || [])));
 
   useEffect(() => {
     const fetchBlogs = async () => {
@@ -52,10 +48,11 @@ export default function Blogs() {
       }
     };
 
-    // Simulate network delay for demo purposes
-    const timer = setTimeout(() => fetchBlogs(), 1500);
-    return () => clearTimeout(timer);
+    fetchBlogs();
   }, []);
+
+  // Extract all unique tags from blogs
+  const allTags = Array.from(new Set(blogs.flatMap(blog => blog.tags || [])));
 
   // Filter blogs based on search query and selected tag
   useEffect(() => {
@@ -221,7 +218,6 @@ export default function Blogs() {
                 <FiSearch className="text-white/50" />
               </div>
               <input
-                ref={searchRef}
                 type="text"
                 placeholder="Search blogs..."
                 className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-full focus:outline-none focus:ring-2 focus:ring-[#50a826]/50 focus:border-transparent transition-all"
@@ -230,10 +226,7 @@ export default function Blogs() {
               />
               {searchQuery && (
                 <button
-                  onClick={() => {
-                    setSearchQuery("");
-                    searchRef.current?.focus();
-                  }}
+                  onClick={() => setSearchQuery("")}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                 >
                   <FiX className="text-white/50 hover:text-white transition-colors" />

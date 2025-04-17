@@ -146,8 +146,24 @@ export default function PricingPage() {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
+    } else if (status === "authenticated" && !session?.user?.hasSelectedPlan) {
+      router.push("/signup");
     }
-  }, [status, router]);
+  }, [status, router, session]);
+
+  // Show loading state while checking authentication
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  // Don't render content if not authenticated or hasn't selected plan
+  if (status !== "authenticated" || !session?.user?.hasSelectedPlan) {
+    return null;
+  }
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {

@@ -49,6 +49,7 @@ export async function POST(request: Request) {
         name,
         company,
         role: "CLIENT",
+        hasSelectedPlan: true,
         ...trialData
       }
     });

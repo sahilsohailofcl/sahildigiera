@@ -1,102 +1,118 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
-    try {
-        const caseStudy = await prisma.caseStudy.findUnique({
-            where: { id: params.id }
-        });
-
-        if (!caseStudy) {
-            return NextResponse.json({ error: "Case Study not found" }, { status: 404 });
-        }
-
-        return NextResponse.json(caseStudy);
-    } catch (error) {
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-    }
-}
-
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+// GET a single case study by ID
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-      const session = await getServerSession(authOptions);
-      
-      if (!session?.user) {
-          return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
+    const caseStudy = await prisma.caseStudy.findUnique({
+      where: {
+        id: params.id,
+      },
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
 
-      const data = await req.json();
-      console.log("Update data:", data);
-
-      // Check if case study exists and belongs to the user
-      const existingCaseStudy = await prisma.caseStudy.findUnique({
-          where: { id: params.id }
-      });
-
-      if (!existingCaseStudy) {
-          return NextResponse.json({ error: "Case Study not found" }, { status: 404 });
-      }
-
-      if (existingCaseStudy.userId !== session.user.id) {
-          return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-      }
-
-      // Format the data properly
-      const formattedData = {
-          ...data,
-          results: Array.isArray(data.results) ? data.results : [],
-          technologies: Array.isArray(data.technologies) ? data.technologies : [],
-          metrics: typeof data.metrics === 'string' ? JSON.parse(data.metrics) : data.metrics,
-      };
-
-      const updatedCaseStudy = await prisma.caseStudy.update({
-          where: { id: params.id },
-          data: formattedData,
-      });
-
-      return NextResponse.json(updatedCaseStudy);
-  } catch (error) {
-      console.error("Error updating case study:", error);
+    if (!caseStudy) {
       return NextResponse.json(
-          { error: "Unable to update case study", details: error instanceof Error ? error.message : "Unknown error" },
-          { status: 500 }
+        { error: "Case study not found" },
+        { status: 404 }
       );
+    }
+
+    return NextResponse.json(caseStudy);
+  } catch (error) {
+    console.error("Error fetching case study:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch case study" },
+      { status: 500 }
+    );
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+// UPDATE a case study
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-      const session = await getServerSession(authOptions);
-      
-      if (!session?.user) {
-          return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
+    const session = await getServerSession(authOptions);
 
-      // Check if case study exists and belongs to the user
-      const existingCaseStudy = await prisma.caseStudy.findUnique({
-          where: { id: params.id }
-      });
-
-      if (!existingCaseStudy) {
-          return NextResponse.json({ error: "Case Study not found" }, { status: 404 });
-      }
-
-      if (existingCaseStudy.userId !== session.user.id) {
-          return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-      }
-
-      await prisma.caseStudy.delete({
-          where: { id: params.id },
-      });
-
-      return NextResponse.json({ message: "Case Study deleted successfully" });
-  } catch (error) {
-      console.error("Error deleting case study:", error);
+    if (!session) {
       return NextResponse.json(
-          { error: "Unable to delete case study", details: error instanceof Error ? error.message : "Unknown error" },
-          { status: 500 }
+        { error: "Unauthorized" },
+        { status: 401 }
       );
+    }
+
+    const data = await request.json();
+    const caseStudy = await prisma.caseStudy.update({
+      where: {
+        id: params.id,
+      },
+      data: {
+        title: data.title,
+        description: data.description,
+        category: data.category,
+        challenge: data.challenge,
+        solution: data.solution,
+        results: data.results,
+        technologies: data.technologies,
+        coverImage: data.coverImage,
+        metrics: data.metrics,
+      },
+    });
+
+    return NextResponse.json(caseStudy);
+  } catch (error) {
+    console.error("Error updating case study:", error);
+    return NextResponse.json(
+      { error: "Failed to update case study" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE a case study
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    await prisma.caseStudy.delete({
+      where: {
+        id: params.id,
+      },
+    });
+
+    return NextResponse.json(
+      { message: "Case study deleted successfully" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error deleting case study:", error);
+    return NextResponse.json(
+      { error: "Failed to delete case study" },
+      { status: 500 }
+    );
   }
 }
