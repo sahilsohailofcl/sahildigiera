@@ -72,8 +72,11 @@ export async function POST(req: NextRequest) {
     // Create a price based on the billing period
     const price = await stripe.prices.create({
       product: priceId,
-      unit_amount: priceId === process.env.NEXT_PUBLIC_STRIPE_GROWTH_PRICE_ID ? 49900 :
-                  priceId === process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID ? 99900 : 199900,
+      unit_amount: priceId === process.env.NEXT_PUBLIC_STRIPE_GROWTH_PRICE_ID ? 
+                  (billingPeriod === 'annual' ? 479000 : 49900) :
+                  priceId === process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID ? 
+                  (billingPeriod === 'annual' ? 959000 : 99900) : 
+                  (billingPeriod === 'annual' ? 1919000 : 199900),
       currency: 'usd',
       recurring: {
         interval: billingPeriod === 'annual' ? 'year' : 'month',
