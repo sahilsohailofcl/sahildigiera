@@ -12,7 +12,11 @@ import {
   CogIcon,
   FlagIcon,
   StarIcon,
-  BookmarkIcon
+  BookmarkIcon,
+  WrenchScrewdriverIcon,
+  ShoppingCartIcon,
+  CurrencyDollarIcon,
+  CalendarIcon
 } from "@heroicons/react/24/outline";
 
 interface DashboardSidebarProps {
@@ -26,6 +30,10 @@ interface DashboardSidebarProps {
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: HomeIcon, color: "text-[#50a826]" },
   { name: "Projects", href: "/dashboard/projects", icon: FolderIcon, color: "text-[#50a826]" },
+  { name: "Services", href: "/dashboard/services", icon: WrenchScrewdriverIcon, color: "text-[#50a826]" },
+  { name: "Pricing", href: "/dashboard/pricing", icon: CurrencyDollarIcon, color: "text-[#50a826]" },
+  { name: "Orders", href: "/dashboard/order", icon: ShoppingCartIcon, color: "text-[#50a826]" },
+  { name: "Schedule", href: "/dashboard/schedule", icon: CalendarIcon, color: "text-[#50a826]" },
   { name: "Billing", href: "/dashboard/billing", icon: CreditCardIcon, color: "text-[#50a826]" },
   { name: "Support", href: "/dashboard/support", icon: QuestionMarkCircleIcon, color: "text-[#50a826]" },
   { name: "Settings", href: "/dashboard/settings", icon: CogIcon, color: "text-[#50a826]" },
