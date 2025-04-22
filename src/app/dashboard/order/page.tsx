@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -99,6 +99,14 @@ const services = {
 };
 
 export default function OrderPage() {
+  return (
+    <Suspense fallback={<div className="text-white">Loading...</div>}>
+      <OrderPageContent />
+    </Suspense>
+  );
+}
+
+function OrderPageContent() {
   const searchParams = useSearchParams();
   const serviceId = searchParams.get("service");
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
